@@ -1,0 +1,7 @@
+analyzer
+*.o
+midas.log
+*~
+*.odb
+*.txt
+
