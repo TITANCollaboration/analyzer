@@ -1,5 +1,5 @@
 // small+simple replacement for root histograms
-//    Keep same code (add this pointers), style is useful when having mutiple
+//    Keep same code (add thisptr pointers), style is useful when having mutiple
 //    histogram types/dimensions (otherwise clearer to convert to procedural)
 // file IO is separate from histogram access: analyser dumps files at endofrun
 #include <stdio.h>
@@ -50,43 +50,43 @@ int Zero_Histograms()
    }
 }
 
-int TH1I_Reset(TH1I *this)
+int TH1I_Reset(TH1I *thisptr)
 {
-   memset(this->data, 0, this->xbins*sizeof(float)); return(0);
-   this->valid_bins    = this->xbins;
-   this->underflow     = 0;
-   this->overflow      = 0;
-   this->entries       = 0;
+   memset(thisptr->data, 0, thisptr->xbins*sizeof(float)); return(0);
+   thisptr->valid_bins    = thisptr->xbins;
+   thisptr->underflow     = 0;
+   thisptr->overflow      = 0;
+   thisptr->entries       = 0;
 }
 
-int TH1I_Fill(TH1I *this, int bin, int count)
+int TH1I_Fill(TH1I *thisptr, int bin, int count)
 {
-   (this->entries)++;
-   if( bin <            0 ){ (this->underflow)++; return(0); }
-   if( bin >= this->xbins ){ (this-> overflow)++; return(0); }
-   (this->data[bin])+=count;
+   (thisptr->entries)++;
+   if( bin <            0 ){ (thisptr->underflow)++; return(0); }
+   if( bin >= thisptr->xbins ){ (thisptr-> overflow)++; return(0); }
+   (thisptr->data[bin])+=count;
    return(0);
 }
 
-int TH1I_SetBinContent(TH1I *this, int bin, int value)
+int TH1I_SetBinContent(TH1I *thisptr, int bin, int value)
 {
-   if( bin < 0 || bin >= this->xbins ){ return(-1); }
-   (this->data[bin])=value; return(0);
+   if( bin < 0 || bin >= thisptr->xbins ){ return(-1); }
+   (thisptr->data[bin])=value; return(0);
 }
 
-int TH1I_GetBinContent(TH1I *this, int bin)
+int TH1I_GetBinContent(TH1I *thisptr, int bin)
 {
-   if( bin < 0 || bin >= this->xbins ){ return(0); }
-   return( (this->data[bin]) );
+   if( bin < 0 || bin >= thisptr->xbins ){ return(0); }
+   return( (thisptr->data[bin]) );
 }
 
-int TH1I_SetValidLen(TH1I *this, int bins)
+int TH1I_SetValidLen(TH1I *thisptr, int bins)
 {
-   if( bins < 0 || bins >= this->xbins ){ return(0); }
-   (this->valid_bins)=bins; return(0);
+   if( bins < 0 || bins >= thisptr->xbins ){ return(0); }
+   (thisptr->valid_bins)=bins; return(0);
 }
 
-/* if this starts being slow - add names to hash table */
+/* if thisptr starts being slow - add names to hash table */
 TH1I *hist_querytitle(char *name)
 {
    TH1I *ptr;   int i;
@@ -160,7 +160,7 @@ TH1I *H1_BOOK(char *name, char *title, int nbins, int arg2, int arg3)
 //   **if uncompressed** can live update disk file
 //      even if compressed - can add new entry at end, and mark old invalid
 //         will have to sort out when closing file - not that important
-//         so could defer this (e.g. if analyzer crashes)
+//         so could defer thisptr (e.g. if analyzer crashes)
 // compression (not only gzip etc, use cubesort methods)
 //    [could use more working code for compressing spartan config file!]
 //    empty spectra - zero length!
@@ -179,7 +179,7 @@ TH1I *H1_BOOK(char *name, char *title, int nbins, int arg2, int arg3)
 //                                                                   ascii3col
 // first file "griffin histogram archive file"[zero length]
 //   other fields for communication between programs having file open
-//   memory map this entry - doesn't actually reduce disk-reads when checking?
+//   memory map thisptr entry - doesn't actually reduce disk-reads when checking?
 //     could do similar with unused bits of indiv. spec headers (unnecessary?)
 // 
 // use name[100] for [path]/handle [=>short name in tar content listings]
@@ -192,7 +192,7 @@ TH1I *H1_BOOK(char *name, char *title, int nbins, int arg2, int arg3)
 // as histo folders don't have any attributes that need saving
 //
 //    **also need handle, title, maybe calibration etc? (probably not)
-//    **this plus mtime etc can be stored in tar header**
+//    **thisptrptr plus mtime etc can be stored in tar header**
 //    file itself has owner/group - could use these fields for bins
 // extension .grif not .tar - to distinguish
 // tar headers ...     **size OCTAL**    linkname[100] follows type -> 257bytes

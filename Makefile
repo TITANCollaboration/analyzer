@@ -2,17 +2,17 @@
 
 DRV_DIR         = $(MIDASSYS)/drivers/bus
 INC_DIR 	= $(MIDASSYS)/include
-#LIB_DIR 	= $(MIDASSYS)/linux/lib
-LIB_DIR 	= $(MIDASSYS)/linux-m32/lib
+LIB_DIR 	= $(MIDASSYS)/linux/lib
+#LIB_DIR 	= $(MIDASSYS)/linux-m32/lib
 
 OSFLAGS = -DOS_LINUX -Dextname -DUSE_ROODY
-CFLAGS = -O -m32 -Wall
+CFLAGS = -O -Wall
 #LIBS = -lm -lz -lutil -lnsl -lpthread # Now need -lrt for some reason ???
 LIBS = -lm -lz -lutil -lnsl -lpthread -lrt
 
 LIB = $(LIB_DIR)/libmidas.a
 
-CC = gcc
+CC = g++
 CXX = g++
 CFLAGS += -g -I$(INC_DIR) -I$(DRV_DIR) -I$(VME_DIR)/include
 LDFLAGS += 
