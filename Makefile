@@ -15,12 +15,12 @@ LIB = $(LIB_DIR)/libmidas.a
 CC = g++
 CXX = g++
 CFLAGS += -g -I$(INC_DIR) -I$(DRV_DIR) -I$(VME_DIR)/include
-LDFLAGS += 
+LDFLAGS +=
 LDFEFLAGS += -L$(VME_DIR)/lib -lvme
 
-MODULES 	= angrif.o histogram.o web_server.o
+MODULES 	= angrif.o anmdpp.o histogram.o web_server.o
 
-all: analyzer 
+all: analyzer
 
 analyzer: $(LIB) $(LIB_DIR)/mana.o analyzer.o $(MODULES) Makefile
 	$(CC) $(CFLAGS) -o $@ $(LIB_DIR)/mana.o analyzer.o $(MODULES) \
@@ -30,6 +30,9 @@ analyzer.o: analyzer.c
 	$(CC) $(USERFLAGS) $(CFLAGS) $(OSFLAGS) -o $@ -c $<
 
 angrif.o: angrif.c web_server.h histogram.h
+	$(CC) $(USERFLAGS) $(CFLAGS) $(OSFLAGS) -o $@ -c $<
+
+anmdpp.o: anmdpp.c web_server.h histogram.h
 	$(CC) $(USERFLAGS) $(CFLAGS) $(OSFLAGS) -o $@ -c $<
 
 web_server.o: web_server.c web_server.h histogram.h

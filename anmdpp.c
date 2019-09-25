@@ -16,20 +16,26 @@
 #define TRUE 1
 #define FALSE 0
 
-int griffin(EVENT_HEADER *, void *);
-int griffin_init();
-int griffin_bor(INT run_number);
-int griffin_eor(INT run_number);
+int mdpp(EVENT_HEADER *, void *);
+int mdpp_init();
+int mdpp_bor(INT run_number);
+int mdpp_eor(INT run_number);
 void read_odb_gains();  int read_odb_histinfo();  int hist_init();
-float spread(int val){ return( val + rand()/(1.0*RAND_MAX) ); }
+//float spread(int val){ return( val + rand()/(1.0*RAND_MAX) ); }
+extern float spread(int val);
 
-ANA_MODULE griffin_module = {
-   "Griffin",              /* module name           */
-   "UrMom",                /* author                */
-   griffin,                /* event routine         */
-   griffin_bor,            /* BOR routine           */
-   griffin_eor,            /* EOR routine           */
-   griffin_init,           /* init routine          */
+extern int hist_init();
+extern void read_odb_gains();
+extern int read_odb_histinfo();
+
+
+ANA_MODULE mdpp_module = {
+   "MDPP",              /* module name           */
+   "Jon Ringuette",                /* author                */
+   mdpp,                /* event routine         */
+   mdpp_bor,            /* BOR routine           */
+   mdpp_eor,            /* EOR routine           */
+   mdpp_init,           /* init routine          */
    NULL,                   /* exit routine          */
    NULL,                   /* parameter structure   */
    0,                      /* structure size        */
@@ -48,7 +54,7 @@ ANA_MODULE griffin_module = {
 #define T_SPEC_LENGTH   8192
 #define WV_SPEC_LENGTH  4096
 
-typedef struct griffin_fragment_struct {
+typedef struct mdpp_fragment_struct {
    int     address;   int  chan;       int    dtype;
    int      energy;   int e_bad;       int    integ;   int cfd;
    int     energy2;   int e2_bad;      int   integ2;   int cc_long;
@@ -59,16 +65,16 @@ typedef struct griffin_fragment_struct {
    int   master_id;   int master_pattern;
    int      net_id;   int trigger_num;
    int  wf_present;   short waveform_length;
-} Grif_event;
+} MDPP_event;
 
 static int process_waveforms = 1;
 
-static Grif_event  grif_event;
-static Grif_event *ptr = &grif_event;
+static MDPP_event  mdpp_event;
+static MDPP_event *ptr = &mdpp_event;
 static short       waveform[MAX_SAMPLE_LEN];
 static int        rate_data[MAX_CHAN];
-//static float          gains[MAX_CHAN];
-//static float        offsets[MAX_CHAN];
+//static float          mdpp_gains[MAX_CHAN];
+//static float        mdpp_offsets[MAX_CHAN];
 static char       chan_name[MAX_CHAN][MIDAS_STRLEN];
 static short   chan_address[MAX_CHAN];
 static int     num_chanhist;
@@ -76,21 +82,21 @@ static short   address_chan[MAX_ADDRESS];
 
 extern HNDLE hDB; // Odb Handle
 
-float   gains[NUM_ODB_CHAN];
-float offsets[NUM_ODB_CHAN];
+float   mdpp_gains[NUM_ODB_CHAN];
+float mdpp_offsets[NUM_ODB_CHAN];
 
-int decode_griffin_event( unsigned int *evntbuf, int evntbuflen);
-int process_decoded_fragment(Grif_event *ptr);
-int unpack_griffin_bank(unsigned *buf, int len);
+int decode_mdpp_event( unsigned int *evntbuf, int evntbuflen);
+int process_decoded_fragment(MDPP_event *ptr);
+int unpack_mdpp_bank(unsigned *buf, int len);
 
 /////////////////////////////////////////////////////////////////////////////
 
-int griffin_init()
+int mdpp_init()
 {  int i;
-   read_odb_gains();  // Print the loaded gains and offsets
+   read_odb_gains();  // Print the loaded mdpp_gains and mdpp_offsets
    fprintf(stdout,"\nRead Gain/Offset values from ODB\nIndex\tGain\tOffset\n");
    for(i=0; i<NUM_ODB_CHAN; i++){
-     fprintf(stdout,"%d\t%f\t%f\n",i,gains[i],offsets[i]);
+     fprintf(stdout,"%d\t%f\t%f\n",i,mdpp_gains[i],mdpp_offsets[i]);
    }
    fprintf(stdout,"\n\n");
 
@@ -100,9 +106,9 @@ int griffin_init()
    hist_init();
    return SUCCESS;
 }
-int griffin_eor(INT run_number){ return SUCCESS; }
+int mdpp_eor(INT run_number){ return SUCCESS; }
 
-void dump_event(unsigned int *data, int len)
+/*void dump_event(unsigned int *data, int len)
 {
    int i;
    for(i=0; i<len; i++){
@@ -110,29 +116,29 @@ void dump_event(unsigned int *data, int len)
       if( ((i+1)%6) == 0 ){ printf("\n   "); }
    }
    if( i % 6 ){ printf("\n   "); }
-}
+}*/
 
-void read_odb_gains()
+/*void read_odb_gains()
 {
    int status, size;
    char tmp[STRING_LEN];
    HNDLE hKey;
 
-   // readgains and offsets from ODB
+   // readmdpp_gains and mdpp_offsets from ODB
    sprintf(tmp,"/DAQ/MSC/gain");
    if( (status=db_find_key(hDB, 0, tmp, &hKey)) != DB_SUCCESS){
      cm_msg(MINFO,"FE","Key %s not found", tmp); return;
    }
-   size=sizeof(gains);
-   if( (db_get_data(hDB,hKey,&gains,&size,TID_FLOAT)) != DB_SUCCESS){
+   size=sizeof(mdpp_gains);
+   if( (db_get_data(hDB,hKey,&mdpp_gains,&size,TID_FLOAT)) != DB_SUCCESS){
       cm_msg(MINFO,"FE","Can't get data for Key %s", tmp); return;
    }
    sprintf(tmp,"/DAQ/MSC/offset");
    if( (status=db_find_key(hDB, 0, tmp, &hKey)) != DB_SUCCESS){
      cm_msg(MINFO,"FE","Key %s not found", tmp); return;
    }
-   size=sizeof(offsets);
-   if( (db_get_data(hDB,hKey,&offsets,&size,TID_FLOAT)) != DB_SUCCESS){
+   size=sizeof(mdpp_offsets);
+   if( (db_get_data(hDB,hKey,&mdpp_offsets,&size,TID_FLOAT)) != DB_SUCCESS){
       cm_msg(MINFO,"FE","Can't get data for Key %s", tmp); return;
    }
 }
@@ -169,11 +175,16 @@ int read_odb_histinfo()
       cm_msg(MINFO,"FE","Can't get record for Key %s", tmp); return(-1);
    }
    return(size/MIDAS_STRLEN);
-}
-
+}*/
+extern TH1I **hit_hist;
+extern TH1I **sum_hist;
+extern TH1I **ph_hist;
+extern TH1I **e_hist;
+extern TH1I **cfd_hist;
+extern TH1I **wave_hist;
 #define N_HITPAT 5
 #define N_SUM 5
-char hit_titles[N_HITPAT][32]={
+/*char hit_titles[N_HITPAT][32]={
    "HITPATTERN_Energy",   "HITPATTERN_Time",
    "HITPATTERN_Waveform", "HITPATTERN_Pulse_Height", "HITPATTERN_Rate"};
 char sum_titles[N_SUM][32]={ "SUM_Singles_Low_gain_Energy","SUM_Singles_High_gain_Energy","SUM_Addback_Energy","SUM_PACES_Energy","SUM_LaBr3_Energy"};
@@ -184,8 +195,8 @@ TH1I *hit_hist[N_HITPAT];
 TH1I *sum_hist[N_SUM];
 TH1I *ph_hist[MAX_CHAN], *e_hist[MAX_CHAN], *cfd_hist[MAX_CHAN];
 TH1I *wave_hist[MAX_CHAN];
-
-int hist_init()
+*/
+/*int hist_init()
 {
    char title[STRING_LEN], handle[STRING_LEN];
    int i;
@@ -213,10 +224,10 @@ int hist_init()
    }
    return(0);
 }
-
+*/
 static time_t bor_time=-1, start_time=-1;
 static unsigned start_pkt;
-int griffin_bor(INT run_number)
+int mdpp_bor(INT run_number)
 {
    bor_time = time(NULL); start_time = -1;
    read_odb_gains();
@@ -230,24 +241,20 @@ int griffin_bor(INT run_number)
 /////////////////            per event functions           //////////////////
 /////////////////////////////////////////////////////////////////////////////
 
-int griffin(EVENT_HEADER *pheader, void *pevent)
+int mdpp(EVENT_HEADER *pheader, void *pevent)
 {
    unsigned int *data;
    int words, evlen;
-
-   if(        (words = bk_locate(pevent, "GRF0", (DWORD *)&data)) > 0 ) {
-   } else if( (words = bk_locate(pevent, "GRF3", (DWORD *)&data)) > 0 ){ // GRF3
-   } else if( (words = bk_locate(pevent, "GRF4", (DWORD *)&data)) > 0 ){ // GRF4
-
-
+   printf("Just happy we got here??!?!\n");
+   if( (words = bk_locate(pevent, "MDPP", (DWORD *)&data)) > 0 ) {
    } else {
-      printf("Getting here!!");
+      printf("Getting here MDPP!!");
       return(-1);
    }
    while( words > 0 ){  // there may be many fragments in each event ...
-      if( (evlen = unpack_griffin_bank( data, words )) < 0 ){ break; }
+      if( (evlen = unpack_mdpp_bank( data, words )) < 0 ){ break; }
       data += evlen; words -= evlen;
-      if( process_decoded_fragment( &grif_event ) ){
+      if( process_decoded_fragment( &mdpp_event ) ){
          fprintf(stderr,"skipping %d items after error ...\n", words);
          words = 0; break;
       }
@@ -256,20 +263,20 @@ int griffin(EVENT_HEADER *pheader, void *pevent)
 }
 
 // find fragment boundaries in bank
-int unpack_griffin_bank(unsigned *buf, int len)
+int unpack_mdpp_bank(unsigned *buf, int len)
 {
    unsigned *bufend = buf+len, *ptr = buf;
 
    while( buf < bufend ){
       if( ((*(ptr++)>>28)&0xff) == 0xE ){
-	 if( decode_griffin_event( buf, ptr-buf ) ){ return(-1); }
-	 return(ptr-buf);
+     if( decode_mdpp_event( buf, ptr-buf ) ){ return(-1); }
+     return(ptr-buf);
       }
    }
    return(0);
 }
 
-int GetIDfromAddress(int addr)
+int mdpp_GetIDfromAddress(int addr)
 {
    int id;
    //for(i=0; i<NUM_ODB_CHAN; i++){
@@ -280,17 +287,17 @@ int GetIDfromAddress(int addr)
    }
    return(id);
 }
-int decode_griffin_event( unsigned int *evntbuf, int evntbuflen)
+int decode_mdpp_event( unsigned int *evntbuf, int evntbuflen)
 {
   unsigned int *evntbufend = evntbuf+evntbuflen, *evstrt=evntbuf, val32;
    int type, value, qtcount=0, chan;
    static int event_count;
    short *wave_len = NULL;
-   printf("Going to defcode griffin event... \n");
+   printf("Going to decode mdpp event... \n");
    // Clear ptr at start of buffer and check the first word is a good header
-   memset(ptr, 0, sizeof(Grif_event) );
+   memset(ptr, 0, sizeof(MDPP_event) );
    if( ((*evntbuf) & 0x80000000) != 0x80000000 ){
-      fprintf(stderr,"griffin_decode: bad header in event %d\n", event_count );
+      fprintf(stderr,"mdppp_decode: bad header in event %d\n", event_count );
       return(-1);
    }
    while( evntbuf < evntbufend ){
@@ -300,99 +307,99 @@ int decode_griffin_event( unsigned int *evntbuf, int evntbuflen)
          if( evntbuf != evstrt+1 ){
             fprintf(stderr,"Event 0x%x(chan%d) 0x8 not at start of data\n",
                event_count, ptr->chan );
-	 }
+     }
          ptr->dtype  = ((value & 0x0000F) >>  0);
          ptr->address= ((value & 0xFFFF0) >>  4);
-         chan = ptr->chan = GetIDfromAddress(ptr->address);
+         chan = ptr->chan = mdpp_GetIDfromAddress(ptr->address);
          //ptr->chan   = ((value & 0x00FF0) >>  4);
          //grifc_port  = ((value & 0x0F000) >> 12);
          //master_port = ((value & 0xF0000) >> 16);
-	 qtcount = 0;
+     qtcount = 0;
          wave_len  = &ptr->waveform_length;     /* should be zero here */
- 	 break;
+     break;
       case 0x9:                      /* Channel Trigger Counter [AND MODE] */
          ptr->trig_req =  value & 0x0fffffff; break;
       case 0xa:                                           /*  Time Stamp Lo */
          ptr->timestamp   |= ( value & 0x0fffffff ); break;
       case 0xb:                               /* Time Stamp Hi and deadtime */
-	 ptr->timestamp   |= ( (value & 0x0003fff) << 28);
-	 ptr->deadtime     = ( (value & 0xfffc000) >> 14);
-	 break;
-      case 0xc:                                             /* waveform data */
-         if( wave_len == NULL ){
-            fprintf(stderr,"griffin_decode: no memory for waveform\n");
-         } else if( process_waveforms == 1 ){ /* + 14->16bit sign extension */
-	  //short x =  value & 0x3fff        |(((value>>13) & 1) ? 0xC000 : 0);
-	  //short y = (value & 0xfffc000)>>14|(((value>>27) & 1) ? 0xC000 : 0);
-	    waveform[(*wave_len)  ]   = value & 0x3fff;
-            waveform[(*wave_len)++] |= ((value>>13) & 1) ? 0xC000 : 0;
-    	    waveform[(*wave_len)  ]   =(value & 0xfffc000) >> 14;
-            waveform[(*wave_len)++] |= ((value>>27) & 1) ? 0xC000 : 0;
-	  //fprintf(stderr,"   %4d 0x%08x %04x %04x %5d %5d\n",
-	  //	    (*wave_len)-2, val32, x, y, x, y);
-	 }
-	 break;
+     ptr->timestamp   |= ( (value & 0x0003fff) << 28);
+     ptr->deadtime     = ( (value & 0xfffc000) >> 14);
+     break;
+   //   case 0xc:                                             /* waveform data */
+    //     if( wave_len == NULL ){
+ //           fprintf(stderr,"mdpp_decode: no memory for waveform\n");
+ //        } else if( process_waveforms == 1 ){ /* + 14->16bit sign extension */
+      //short x =  value & 0x3fff        |(((value>>13) & 1) ? 0xC000 : 0);
+      //short y = (value & 0xfffc000)>>14|(((value>>27) & 1) ? 0xC000 : 0);
+ //       waveform[(*wave_len)  ]   = value & 0x3fff;
+  //          waveform[(*wave_len)++] |= ((value>>13) & 1) ? 0xC000 : 0;
+   //         waveform[(*wave_len)  ]   =(value & 0xfffc000) >> 14;
+   //         waveform[(*wave_len)++] |= ((value>>27) & 1) ? 0xC000 : 0;
+      //fprintf(stderr,"   %4d 0x%08x %04x %04x %5d %5d\n",
+      //        (*wave_len)-2, val32, x, y, x, y);
+     //}
+    // break;
       case 0xd: ptr->net_id = val32;              /* network packet counter */
          // next 2 words are [mstpat/ppg mstid] in filtered data
-	 if( ( *(evntbuf) >> 31 ) == 0 ){ val32 = *(evntbuf++);
-	    ptr->wf_present = (val32 & 0x8000) >> 15;
-	    ptr->pileup     = (val32 & 0x001F);
-	 }
-	 if( ( *(evntbuf) >> 31 ) == 0 ){ ptr->master_id   = *(evntbuf++); }
-	 break;
+     if( ( *(evntbuf) >> 31 ) == 0 ){ val32 = *(evntbuf++);
+        ptr->wf_present = (val32 & 0x8000) >> 15;
+        ptr->pileup     = (val32 & 0x001F);
+     }
+     if( ( *(evntbuf) >> 31 ) == 0 ){ ptr->master_id   = *(evntbuf++); }
+     break;
       case 0xe:                                             /* Event Trailer */
          if( evntbuf != evntbufend ){
             fprintf(stderr,"Event 0x%x(chan%d) 0xE before End of data\n",
                event_count, ptr->chan );
-	 }
+     }
          break;
       case 0x0: case 0x1: case 0x2: case 0x3:
       case 0x4: case 0x5: case 0x6: case 0x7:
-	 if( evntbuf - evstrt < 4 ){  // header stuff (with no 0xd present)
-	    // next 2 words are [mstpat/ppg mstid] in filtered data
-	    ptr->wf_present = (val32 & 0x8000) >> 15;
-	    ptr->pileup     = (val32 & 0x001F);
-	    if( ( *(evntbuf) >> 31 ) == 0 ){ ptr->master_id   = *(evntbuf++); }
-	    break;
-	 } else { // if dtype=6, maybe RF - extend sign from 30 to 32bits
-	    if( ptr->dtype == 6 && (val32 & (1<<29)) ){ val32 |= 0xC0000000; }
-	    if( ++qtcount == 1 ){                                /* Energy */
-	       ptr->energy  = (ptr->dtype==6) ? val32 : val32 & 0x01ffffff;
-	       ptr->e_bad   = (value >> 25) & 0x1;
-	       ptr-> integ |= ((val32 & 0x7c000000) >> 17); ptr->nhit = 1;
-	    } else if( qtcount == 2 ){                         /* CFD Time */
+     if( evntbuf - evstrt < 4 ){  // header stuff (with no 0xd present)
+        // next 2 words are [mstpat/ppg mstid] in filtered data
+        ptr->wf_present = (val32 & 0x8000) >> 15;
+        ptr->pileup     = (val32 & 0x001F);
+        if( ( *(evntbuf) >> 31 ) == 0 ){ ptr->master_id   = *(evntbuf++); }
+        break;
+     } else { // if dtype=6, maybe RF - extend sign from 30 to 32bits
+        if( ptr->dtype == 6 && (val32 & (1<<29)) ){ val32 |= 0xC0000000; }
+        if( ++qtcount == 1 ){                                /* Energy */
+           ptr->energy  = (ptr->dtype==6) ? val32 : val32 & 0x01ffffff;
+           ptr->e_bad   = (value >> 25) & 0x1;
+           ptr-> integ |= ((val32 & 0x7c000000) >> 17); ptr->nhit = 1;
+        } else if( qtcount == 2 ){                         /* CFD Time */
                ptr->cfd     = (ptr->dtype==6) ? val32 : val32 & 0x003fffff;
-	       ptr-> integ |= ((val32 & 0x7FC00000) >> 22);
+           ptr-> integ |= ((val32 & 0x7FC00000) >> 22);
             } else if( qtcount == 3 ){
-	       if(ptr->dtype==6){ ptr->cc_long  = val32; }  /* descant long*/
-	       else { ptr->integ2 =   val32 & 0x003FFF;
-		      ptr->nhit   = ((val32 & 0xFF0000) >> 16); }
-	    } else if( qtcount == 4 ){
-	       if(ptr->dtype==6){ ptr->cc_short  = val32; } /* descant short*/
-	       else { ptr->energy2 =  val32 & 0x3FFFFF;
-		      ptr->e2_bad  = (val32 >> 25) & 0x1; }
+           if(ptr->dtype==6){ ptr->cc_long  = val32; }  /* descant long*/
+           else { ptr->integ2 =   val32 & 0x003FFF;
+              ptr->nhit   = ((val32 & 0xFF0000) >> 16); }
+        } else if( qtcount == 4 ){
+           if(ptr->dtype==6){ ptr->cc_short  = val32; } /* descant short*/
+           else { ptr->energy2 =  val32 & 0x3FFFFF;
+              ptr->e2_bad  = (val32 >> 25) & 0x1; }
             } else if( qtcount == 5 ){
-	       ptr->integ3 =   val32 & 0x00003FFF;
-	       ptr->integ4 = ((val32 & 0x3FFF0000) >> 16);
-	    } else if( qtcount == 6 ){ ptr->energy3 =  val32 & 0x3FFFFF;
-	                               ptr->e4_bad  = (val32 >> 25) & 0x1;
-	    } else if( qtcount == 7 ){ ptr->energy4 =  val32 & 0x3FFFFF;
-	                               ptr->e4_bad  = (val32 >> 25) & 0x1;
-	    } else {
-	       fprintf(stderr,"Event 0x%x(chan%d) excess PH words\n",
+           ptr->integ3 =   val32 & 0x00003FFF;
+           ptr->integ4 = ((val32 & 0x3FFF0000) >> 16);
+        } else if( qtcount == 6 ){ ptr->energy3 =  val32 & 0x3FFFFF;
+                                   ptr->e4_bad  = (val32 >> 25) & 0x1;
+        } else if( qtcount == 7 ){ ptr->energy4 =  val32 & 0x3FFFFF;
+                                   ptr->e4_bad  = (val32 >> 25) & 0x1;
+        } else {
+           fprintf(stderr,"Event 0x%x(chan%d) excess PH words\n",
                event_count, ptr->chan );
-	    }
+        }
             break;
          }
-      case 0xf: fprintf(stderr,"griffin_decode: 0xF.......\n");
+      case 0xf: fprintf(stderr,"mdpp_decode: 0xF.......\n");
                 /* Unassigned packet identifier */ return(-1);
-      default:  fprintf(stderr,"griffin_decode: default case\n"); return(-1);
+      default:  fprintf(stderr,"mdpp_decode: default case\n"); return(-1);
       }
    }
    return(0);
 }
 
-void checkdata(int len, unsigned int *data) // check test event data
+/*void checkdata(int len, unsigned int *data) // check test event data
 {
    static unsigned int prevword; static int event;
    unsigned int count = prevword & 0x0ffffff;
@@ -400,27 +407,27 @@ void checkdata(int len, unsigned int *data) // check test event data
 
    for(i=0; i<len; i++){
       if( tag != 8 && (data[i]>>28) != 8 ){
-	 gap = (data[i] & 0x0ffffff) - ((count+1) &  0x0ffffff);
-	 if( gap ){
-	    printf("Lost %d words at word %4d of event %10d ... 0x%08x\n   ",
-	       gap, i, event, prevword);
-	    for(j=0; j<len; j++){
-	       printf(" 0x%08x", data[j] );
+     gap = (data[i] & 0x0ffffff) - ((count+1) &  0x0ffffff);
+     if( gap ){
+        printf("Lost %d words at word %4d of event %10d ... 0x%08x\n   ",
+           gap, i, event, prevword);
+        for(j=0; j<len; j++){
+           printf(" 0x%08x", data[j] );
                if( ((j+1)%6) == 0 ){ printf("\n   "); }
-	    }
+        }
             if( j % 6 ){ printf("\n   "); }
-	    break;
-	 }
+        break;
+     }
       }
       count = data[i] & 0x0ffffff; tag = data[i] >> 28;
    }
    ++event; prevword = data[len-1];
-}
+}*/
 
 #define RESET_SECONDS     10
 static time_t last_reset;
 #define TEST_HITPAT(var,bit) (var[(int)bit/32] & (1<<(bit%32)))
-int process_decoded_fragment(Grif_event *ptr)
+int process_decoded_fragment(MDPP_event *ptr)
 {
    time_t current_time = time(NULL);
    static int last_sample, event;
@@ -436,7 +443,7 @@ int process_decoded_fragment(Grif_event *ptr)
    // this should be done in a scalar routine
    if( current_time - last_reset > RESET_SECONDS ){
       for(i=0; i<MAX_CHAN; i++){
-	//spec_store_hit_data[4][i] = rate_data[i];
+    //spec_store_hit_data[4][i] = rate_data[i];
       }
       memset(rate_data, 0, sizeof(rate_data));
       last_reset = current_time;
@@ -445,11 +452,11 @@ int process_decoded_fragment(Grif_event *ptr)
    if( (chan = ptr->chan) == -1 ){ return(0); } // msg printed above for these
    if( chan >= num_chanhist ){
       fprintf(stderr,"process_event: ignored event in chan:%d [0x%04x]\n",
-            	                                      chan, ptr->address );
+                                                      chan, ptr->address );
       return(0);
    }
    energy = ( ptr->integ == 0 ) ? 0 : ptr->energy/ptr->integ;
-   ecal   = spread(energy) * gains[chan] + offsets[chan];
+   ecal   = spread(energy) * mdpp_gains[chan] + mdpp_offsets[chan];
 
    ++rate_data[chan];
    ph_hist[chan] -> Fill(ph_hist[chan],  (int)energy,     1);
@@ -468,12 +475,12 @@ int process_decoded_fragment(Grif_event *ptr)
      if( len > MAX_SAMPLE_LEN ){ len = MAX_SAMPLE_LEN; }
 
      //fprintf(stderr,"%4d - %5d %5d %5d ... %5d %5d %5d ", len,
-     //	 waveform[0]+8192,     waveform[1]+8192,     waveform[2]+8192,
+     //  waveform[0]+8192,     waveform[1]+8192,     waveform[2]+8192,
      //    waveform[len-3]+8192, waveform[len-2]+8192, waveform[len-1]+8192 );
       if( last_sample == 0 ){ last_sample = len; }
       else if( last_sample != len ){
- 	 fprintf(stderr,"event %4d - samples changed %d to %d\n",
-	    event, last_sample, len);
+     fprintf(stderr,"event %4d - samples changed %d to %d\n",
+        event, last_sample, len);
       }
      //fprintf(stderr,"\n");
 

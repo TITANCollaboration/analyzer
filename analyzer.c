@@ -8,16 +8,26 @@
 
 
 extern ANA_MODULE griffin_module;
+extern ANA_MODULE mdpp_module;
+
 
 char *analyzer_name = "Analyzer"; /* The analyzer name (client name)   */
 INT analyzer_loop_period = 0; /* analyzer_loop call interval[ms](0:disable) */
 INT odb_size = DEFAULT_ODB_SIZE; /* default ODB size */
 
-ANA_MODULE *trigger_module[] = { &griffin_module, NULL };
+//ANA_MODULE *trigger_module[] = { &griffin_module, NULL };
+ANA_MODULE *griffin_trigger_module[] = { &griffin_module, NULL };
+ANA_MODULE *mdpp_trigger_module[] = { &mdpp_module, NULL };
 
-BANK_LIST ana_trigger_bank_list[] = { /* online banks */
-  {"GRF3", TID_DWORD, 256, NULL}, {""} ,
+BANK_LIST griffin_ana_trigger_bank_list[] = { /* online banks */
+  {"GRF3", TID_DWORD, 256, NULL}, {"GRF4", TID_DWORD, 256, NULL}, {""} ,
 };
+BANK_LIST mdpp_ana_trigger_bank_list[] = { /* online banks */
+  {"MDPP", TID_DWORD, 256, NULL}, {""} ,
+};
+//BANK_LIST ana_trigger_bank_list[] = { /* online banks */
+//  {"GRF3", TID_DWORD, 256, NULL}, {""} , {"GRF4", TID_DWORD, 256, NULL}, {"MDPP", TID_DWORD, 256, NULL}, {""}
+//};
 
 ANALYZE_REQUEST analyze_request[] = {
    {"Trigger",                  /* equipment name */
@@ -29,11 +39,25 @@ ANALYZE_REQUEST analyze_request[] = {
      TRUE,                      /* enabled */
      "", "",},
     NULL,                       /* analyzer routine */
-    trigger_module,             /* module list */
-    ana_trigger_bank_list,      /* bank list */
+    griffin_trigger_module,             /* module list */
+    griffin_ana_trigger_bank_list,      /* bank list */
     1000,                       /* RWNT buffer size */
     TRUE,                       /* Use tests for this event */
-    }, {""},
+    },
+       {"MDPP_Trigger",                  /* equipment name */
+    {1,                         /* event ID */
+     TRIGGER_ALL,               /* trigger mask */
+     //GET_SOME,                  /* get some events */ /* Removed ?? */
+     GET_NONBLOCKING,           /* get some events */ /* later midas's */
+     "SYSTEM",                  /* event buffer */
+     TRUE,                      /* enabled */
+     "", "",},
+    NULL,                       /* analyzer routine */
+    mdpp_trigger_module,             /* module list */
+    mdpp_ana_trigger_bank_list,      /* bank list */
+    1000,                       /* RWNT buffer size */
+    TRUE,                       /* Use tests for this event */
+    }, {""}
 };
 
 /*--------------------------------------------------------------------------*/
@@ -44,7 +68,7 @@ INT analyzer_init(){
     // Create new thread which launches the Web server
     int a1=1;
     pthread_create(&web_thread, NULL,(void* (*)(void*))web_server_main, &a1);
-    
+
     return SUCCESS;
 }
 
