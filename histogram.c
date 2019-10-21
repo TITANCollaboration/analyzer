@@ -91,6 +91,7 @@ TH1I *hist_querytitle(char *name)
 {
    TH1I *ptr;   int i;
    for(i=0; i<next_histogram; i++){
+      //printf("Histogram that exists in histogram.c : %s", histogram_list[i]);
      ptr = (TH1I *)histogram_list[i];
       if( strcmp(name, ptr->title) == 0 ){ return( ptr ); }
    }
@@ -126,7 +127,7 @@ TH1I *H1_BOOK(char *name, char *title, int nbins, int arg2, int arg3)
    }
    if( (tlen=strlen(title)) >= TITLE_LENGTH  ){ tlen = TITLE_LENGTH-1; }
    if( (hlen=strlen(name))  >= HANDLE_LENGTH ){ hlen = HANDLE_LENGTH-1; }
-      
+   printf("Hist title in H1_BOOK webserver.c : %s\n", title);
    memcpy(result->path, current_path, strlen(current_path) );
    memcpy(result->handle, name, hlen);
    memcpy(result->title, title, tlen);
@@ -181,13 +182,13 @@ TH1I *H1_BOOK(char *name, char *title, int nbins, int arg2, int arg3)
 //   other fields for communication between programs having file open
 //   memory map thisptr entry - doesn't actually reduce disk-reads when checking?
 //     could do similar with unused bits of indiv. spec headers (unnecessary?)
-// 
+//
 // use name[100] for [path]/handle [=>short name in tar content listings]
 // use uid/gid for xbin/ybin - also shown in listing
 // use real size and mtime, linkflag=0 to allow extract file, title->linkname
 // encode bin-format in mode [shown in listing], but also store name in ownr
 // store compression format in group, over/underflow in devmaj/min?
-// 
+//
 // have tree since store pathnames, also don't need to store directory entries
 // as histo folders don't have any attributes that need saving
 //
@@ -205,12 +206,12 @@ TH1I *H1_BOOK(char *name, char *title, int nbins, int arg2, int arg3)
 //    gnu tar - numeric fields can be bin not ascii [set msb of leading byte]
 //    prefix[155] -> atime[12] ctime[12] offset[12] longname[4] pad[1]
 //    4 sparse entries:{offset[12] bytes[12]} realsize[12] extended[1] pad[17]
-// 
+//
 // tar includes plenty of unused header space plus standard extension method
 // - so can include everything in tar header
 // => minimum size is 0.5k (300k per 600 histo) (1-2Mbyte per tigress run!)
 // tigress eta files have 2600 spectra in 1150k (would be ~*2)
-// 
+//
 // will be trivial to convert these files to root files
 // (using script which will work on any root version, not compiled program)
 // ----------------------------------------------------------------------------

@@ -20,20 +20,29 @@ LDFEFLAGS += -L$(VME_DIR)/lib -lvme
 
 MODULES 	= angrif.o anmdpp.o histogram.o web_server.o
 
+ROOTCFLAGS := $(shell  $(ROOTSYS)/bin/root-config --cflags)
+ROOTCFLAGS += -DHAVE_ROOT -DUSE_ROOT
+ROOTLIBS   := $(shell  $(ROOTSYS)/bin/root-config --libs)
+ROOTLIBS   += -lThread
+
+#analyzer: $(LIB64_DIR)/rmana.o $(LIB64_DIR)/libmidas.a analyzer.o anmdpp.o
+#        $(CXX) $(CFLAGS) -o $@ $^ $(ROOTLIBS) $(LIBS)
+        
+        
 all: analyzer
 
 analyzer: $(LIB) $(LIB_DIR)/mana.o analyzer.o $(MODULES) Makefile
-	$(CC) $(CFLAGS) -o $@ $(LIB_DIR)/mana.o analyzer.o $(MODULES) \
-	$(LIB) $(LDFLAGS) $(LIBS)
+	$(CC) $(ROOTCFLAGS) $(CFLAGS) -o $@ $(LIB_DIR)/mana.o analyzer.o $(MODULES) \
+	$(LIB) $(LDFLAGS) $(ROOTLIBS) $(LIBS)
 
 analyzer.o: analyzer.c
-	$(CC) $(USERFLAGS) $(CFLAGS) $(OSFLAGS) -o $@ -c $<
+	$(CC) $(USERFLAGS) $(CFLAGS) $(ROOTCFLAGS) $(OSFLAGS) -o $@ -c $<
 
 angrif.o: angrif.c web_server.h histogram.h
 	$(CC) $(USERFLAGS) $(CFLAGS) $(OSFLAGS) -o $@ -c $<
 
 anmdpp.o: anmdpp.c web_server.h histogram.h
-	$(CC) $(USERFLAGS) $(CFLAGS) $(OSFLAGS) -o $@ -c $<
+	$(CC) $(USERFLAGS) $(CFLAGS) $(ROOTCFLAGS) $(OSFLAGS) -o $@ -c $<
 
 web_server.o: web_server.c web_server.h histogram.h
 	$(CC) $(USERFLAGS) $(CFLAGS) $(OSFLAGS) -o $@ -c $<

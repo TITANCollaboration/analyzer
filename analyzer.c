@@ -8,7 +8,7 @@
 
 
 extern ANA_MODULE griffin_module;
-extern ANA_MODULE mdpp_module;
+extern ANA_MODULE mdpp16_module;
 
 
 char *analyzer_name = "Analyzer"; /* The analyzer name (client name)   */
@@ -17,7 +17,7 @@ INT odb_size = DEFAULT_ODB_SIZE; /* default ODB size */
 
 //ANA_MODULE *trigger_module[] = { &griffin_module, NULL };
 ANA_MODULE *griffin_trigger_module[] = { &griffin_module, NULL };
-ANA_MODULE *mdpp_trigger_module[] = { &mdpp_module, NULL };
+ANA_MODULE *mdpp_trigger_module[] = { &mdpp16_module, NULL };
 
 BANK_LIST griffin_ana_trigger_bank_list[] = { /* online banks */
   {"GRF3", TID_DWORD, 256, NULL}, {"GRF4", TID_DWORD, 256, NULL}, {""} ,
@@ -30,7 +30,7 @@ BANK_LIST mdpp_ana_trigger_bank_list[] = { /* online banks */
 //};
 
 ANALYZE_REQUEST analyze_request[] = {
-   {"Trigger",                  /* equipment name */
+     {"Trigger",                  /* equipment name */
     {1,                         /* event ID */
      TRIGGER_ALL,               /* trigger mask */
      //GET_SOME,                  /* get some events */ /* Removed ?? */
@@ -44,7 +44,7 @@ ANALYZE_REQUEST analyze_request[] = {
     1000,                       /* RWNT buffer size */
     TRUE,                       /* Use tests for this event */
     },
-       {"MDPP_Trigger",                  /* equipment name */
+        {"mdpp16_analyser",                  /* equipment name */
     {1,                         /* event ID */
      TRIGGER_ALL,               /* trigger mask */
      //GET_SOME,                  /* get some events */ /* Removed ?? */
@@ -57,7 +57,9 @@ ANALYZE_REQUEST analyze_request[] = {
     mdpp_ana_trigger_bank_list,      /* bank list */
     1000,                       /* RWNT buffer size */
     TRUE,                       /* Use tests for this event */
-    }, {""}
+    },
+
+ {""}
 };
 
 /*--------------------------------------------------------------------------*/
