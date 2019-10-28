@@ -11,7 +11,6 @@
 #include "web_server.h"
 #include "experim.h"
 
-
 //#include <TH1F.h>
 //#include <TH2F.h>
 //#include <TTree.h>
@@ -42,6 +41,7 @@ static short   address_chan[MAX_ADDRESS];
 
 
 static int debug; // only accessible through gdb
+//TH1I *hit_hist[N_HITPAT];
 
 /*-- Module declaration --------------------------------------------*/
 int mdpp16_event(EVENT_HEADER *, void *);
@@ -76,11 +76,11 @@ ANA_MODULE mdpp16_module = {
 
 extern TH1I **hit_hist;
 extern TH1I **sum_hist;
-extern TH1I **ph_hist;
+//extern TH1I *ph_hist;
 extern TH1I **e_hist;
 extern TH1I **cfd_hist;
 extern TH1I **wave_hist;
-
+TH1I *ph_hist_mdpp[MAX_CHAN];
 
 int hist_init_roody();
 int hist_mdpp_init();
@@ -120,60 +120,9 @@ int mdpp16_init(void)
 
 
 
-/*int hist_init_roody()
-{
-   char name[256];
-   int i;
-
-   sprintf(name,  "Hitpattern");
-   hHitPat = H1_BOOK(name, name, HIT_CHAN, 0, HIT_CHAN );
-
-   open_subfolder("Calibrated Energy");
-   for(i=0; i<NUM_CHAN; i++){
-     // Scaled histogram based on ODB analyzer parameters
-     sprintf(name, "First Calibrated Energy %d", i);
-     hCalEnergy1[i] = H1_BOOK(name, name, ADC_CHAN, 0, (ADC_CHAN-ana_param.peak1_channel)*(ana_param.peak2_energy - ana_param.peak1_energy)/(ana_param.peak2_channel - ana_param.peak1_channel )+ana_param.peak1_energy );
-   }
-   close_subfolder();
-
-   open_subfolder("TDC time difference");
-   for(i=0; i<NUM_CHAN; i++){
-     sprintf(name, "TDC time difference %d", i);
-     hTDC[i] = h1_book<TH1F>(name, name, ADC_CHAN, 0, ADC_CHAN);
-   }
-   close_subfolder();
-
-   open_subfolder("Count Rates");
-   for(i=0; i<NUM_CHAN; i++){
-     sprintf(name, "Count Rate %d", i);
-     hRate[i] = h1_book<TH1F>(name, name, ADC_CHAN, 0, ADC_CHAN);
-   }
-   close_subfolder();
-
-   open_subfolder("Energy vs timestamp colormaps");
-   for(i=0; i<NUM_CHAN; i++){
-     sprintf(name, "Energy vs timestamp %d", i);
-     hEnergy_vs_ts[i] = h2_book<TH2F>(name, name, ADC_CHAN, 0, ADC_CHAN, 70, 0, 70);
-   }
-   close_subfolder();
-
-   open_subfolder("raw");
-   for(i=0; i<NUM_CHAN; i++){
-     // H1_BOOK(name, name, num, min, max )
-      sprintf(name,  "ADC channel%d", i);
-      hEnergy[i] = H1_BOOK(name, name, ADC_CHAN, 0, ADC_CHAN );
-
-      sprintf(name, "ADC chan, flags removed %d", i);
-      hEnergy_flagsrm[i] = H1_BOOK(name, name, ADC_CHAN, 0, ADC_CHAN );
-   }
-   close_subfolder();
-   return(0);
-}
-*/
-
 int hist_mdpp_init()
 {
-
+  printf("Do we get here?!?\n");
   char hit_titles[N_HITPAT][32] = {
     "HITPATTERN_Energy",   "HITPATTERN_Time",
     "HITPATTERN_Waveform", "HITPATTERN_Pulse_Height", "HITPATTERN_Rate"
@@ -184,14 +133,19 @@ int hist_mdpp_init()
   char title[STRING_LEN], handle[STRING_LEN];
   int i;
   for (i = 0; i < MAX_CHAN; i++) { // Create each histogram for this channel
-    if ( i >= num_chanhist ) { break; }
+
+   // if ( i >= num_chanhist ) { break; }
+     //     printf("222Do we get here?!?\n");
+    sprintf(chan_name[i], "mdpp16_%i", i);
     printf("%d = %d[0x%08x]: %s\n", i, chan_address[i], chan_address[i], chan_name[i]);
     sprintf(title,  "%s_Pulse_Height",   chan_name[i] );
     sprintf(handle, "%s_Q",              chan_name[i] );
-    ph_hist[i] = H1_BOOK(handle, title, ENERGY_BINS, 0, ENERGY_BINS);
+    ph_hist_mdpp[i] = H1_BOOK(handle, title, ENERGY_BINS, 0, ENERGY_BINS);
+    //      printf("Lets see if we crash..%i\n", ph_hist_mdpp[0]);
+      //ph_hist_mdpp[0] -> GetBinContent(ph_hist_mdpp[0],0);
 
 //    ph_hist[i] = H1_BOOK(handle, title, E_SPEC_LENGTH, 0, E_SPEC_LENGTH);
-
+/* JONR
     sprintf(title,  "%s_Energy",         chan_name[i] );
     sprintf(handle, "%s_E",              chan_name[i] );
     e_hist[i] = H1_BOOK(handle, title, E_SPEC_LENGTH, 0, E_SPEC_LENGTH);
@@ -207,7 +161,8 @@ int hist_mdpp_init()
   }
   for (i = 0; i < N_SUM; i++) { // Create Sum spectra
     sum_hist[i] = H1_BOOK(sum_names[i], sum_titles[i], E_SPEC_LENGTH, 0, E_SPEC_LENGTH);
-  }
+  } JONR END*/
+    }
   return (0);
 }
 
@@ -323,9 +278,13 @@ int mdpp16_event(EVENT_HEADER *pheader, void *pevent)
 //JON     hEnergy_flagsrm[chan]-> Fill(evadcdata); // raw ADC, flags removed
       printf("Adding entry for energy hit %i on channel : %i\n", evadcdata, chan);
        //ph_hist[chan]-> Fill(evadcdata); // raw ADC, flags removed
-      //ph_hist[1] -> Fill(ph_hist[1],  (int)15,     1);
+   //   ph_hist[chan] -> Fill(ph_hist[chan],  (int)15,     1);
+      printf("Lets see if we crash..%i\n", ph_hist_mdpp[chan]);
+      //ph_hist_mdpp[0] -> GetBinContent(ph_hist_mdpp[0],0);
 
-   //   ph_hist[chan] -> Fill(ph_hist[chan],  (int)evadcdata,     1);
+      //ph_hist_mdpp[0] -> Fill(ph_hist_mdpp[0],  1,     1);
+
+      ph_hist_mdpp[chan] -> Fill(ph_hist_mdpp[chan],  (int)evadcdata,     1);
       printf("Do we crash here?\n");
     }
 //JON  hEnergy_vs_ts    [chan]-> Fill(evadcdata, ts/16000000);

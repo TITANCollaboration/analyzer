@@ -61,7 +61,10 @@ int TH1I_Reset(TH1I *thisptr)
 
 int TH1I_Fill(TH1I *thisptr, int bin, int count)
 {
+   printf("Got here1\n");
    (thisptr->entries)++;
+   printf("Got here2\n");
+   
    if( bin <            0 ){ (thisptr->underflow)++; return(0); }
    if( bin >= thisptr->xbins ){ (thisptr-> overflow)++; return(0); }
    (thisptr->data[bin])+=count;

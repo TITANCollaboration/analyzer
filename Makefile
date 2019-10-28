@@ -2,10 +2,11 @@
 
 DRV_DIR         = $(MIDASSYS)/drivers/bus
 INC_DIR 	= $(MIDASSYS)/include
-LIB_DIR 	= $(MIDASSYS)/linux/lib
+#LIB_DIR 	= $(MIDASSYS)/linux/lib
+LIB_DIR 	= $(MIDASSYS)/lib
 #LIB_DIR 	= $(MIDASSYS)/linux-m32/lib
 
-OSFLAGS = -DOS_LINUX -Dextname -DUSE_ROODY
+OSFLAGS = -DOS_LINUX -Dextname -DUSE_ROODY -fpermissive
 CFLAGS = -O -Wall
 #LIBS = -lm -lz -lutil -lnsl -lpthread # Now need -lrt for some reason ???
 LIBS = -lm -lz -lutil -lnsl -lpthread -lrt
@@ -19,6 +20,7 @@ LDFLAGS +=
 LDFEFLAGS += -L$(VME_DIR)/lib -lvme
 
 MODULES 	= angrif.o anmdpp.o histogram.o web_server.o
+MODULES2 	= histogram.o web_server.o
 
 ROOTCFLAGS := $(shell  $(ROOTSYS)/bin/root-config --cflags)
 ROOTCFLAGS += -DHAVE_ROOT -DUSE_ROOT
@@ -27,16 +29,23 @@ ROOTLIBS   += -lThread
 
 #analyzer: $(LIB64_DIR)/rmana.o $(LIB64_DIR)/libmidas.a analyzer.o anmdpp.o
 #        $(CXX) $(CFLAGS) -o $@ $^ $(ROOTLIBS) $(LIBS)
-        
-        
-all: analyzer
+
+
+all: analyzer #test_hist_fill
 
 analyzer: $(LIB) $(LIB_DIR)/mana.o analyzer.o $(MODULES) Makefile
 	$(CC) $(ROOTCFLAGS) $(CFLAGS) -o $@ $(LIB_DIR)/mana.o analyzer.o $(MODULES) \
 	$(LIB) $(LDFLAGS) $(ROOTLIBS) $(LIBS)
 
+#test_hist_fill: $(LIB) $(LIB_DIR)/mana.o test_hist_fill.o $(MODULES2) Makefile
+#	$(CC) $(ROOTCFLAGS) $(CFLAGS) -o $@ $(LIB_DIR)/mana.o test_hist_fill.o $(MODULES2) \
+#	$(LIB) $(LDFLAGS) $(ROOTLIBS) $(LIBS)
+
 analyzer.o: analyzer.c
 	$(CC) $(USERFLAGS) $(CFLAGS) $(ROOTCFLAGS) $(OSFLAGS) -o $@ -c $<
+
+#test_hist_fill.o: test_hist_fill.c
+#	$(CC) $(USERFLAGS) $(CFLAGS) $(ROOTCFLAGS) $(OSFLAGS) -o $@ -c $<
 
 angrif.o: angrif.c web_server.h histogram.h
 	$(CC) $(USERFLAGS) $(CFLAGS) $(OSFLAGS) -o $@ -c $<
@@ -48,7 +57,7 @@ web_server.o: web_server.c web_server.h histogram.h
 	$(CC) $(USERFLAGS) $(CFLAGS) $(OSFLAGS) -o $@ -c $<
 
 histogram.o: histogram.c histogram.h
-	$(CC) $(USERFLAGS) $(CFLAGS) $(OSFLAGS) -o $@ -c $<
+	$(CC) $(USERFLAGS) $(CFLAGS) $(OSFLAGS) $(ROOTCFLAGS) $(ROOTLIBS) -o $@ -c $<
 
 clean::
 	rm -f *.o *~ \#* $(FEMODULES) $(MODULES)
