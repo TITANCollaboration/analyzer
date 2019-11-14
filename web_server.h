@@ -1,5 +1,5 @@
 #define WEBPORT                         9093
-#define ROOTDIR "/home/griffin/daq/analyser"
+#define ROOTDIR "/home/ebit/daq/analyser"
 // was used to send css or js files
 
 #define MAXLEN      1024 // maximum url and other string lengths

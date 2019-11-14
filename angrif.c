@@ -318,20 +318,22 @@ int decode_griffin_event( unsigned int *evntbuf, int evntbuflen)
 	 ptr->timestamp   |= ( (value & 0x0003fff) << 28);
 	 ptr->deadtime     = ( (value & 0xfffc000) >> 14);
 	 break;
-      case 0xc:                                             /* waveform data */
+   //JonR : ignore all this waveform stuff for now..
+    /*
+      case 0xc:                                             // waveform data
          if( wave_len == NULL ){
             fprintf(stderr,"griffin_decode: no memory for waveform\n");
-         } else if( process_waveforms == 1 ){ /* + 14->16bit sign extension */
+         } else if( process_waveforms == 1 ){ // + 14->16bit sign extension
 	  //short x =  value & 0x3fff        |(((value>>13) & 1) ? 0xC000 : 0);
 	  //short y = (value & 0xfffc000)>>14|(((value>>27) & 1) ? 0xC000 : 0);
 	    waveform[(*wave_len)  ]   = value & 0x3fff;
             waveform[(*wave_len)++] |= ((value>>13) & 1) ? 0xC000 : 0;
     	    waveform[(*wave_len)  ]   =(value & 0xfffc000) >> 14;
             waveform[(*wave_len)++] |= ((value>>27) & 1) ? 0xC000 : 0;
-	  //fprintf(stderr,"   %4d 0x%08x %04x %04x %5d %5d\n",
-	  //	    (*wave_len)-2, val32, x, y, x, y);
+
 	 }
 	 break;
+    */
       case 0xd: ptr->net_id = val32;              /* network packet counter */
          // next 2 words are [mstpat/ppg mstid] in filtered data
 	 if( ( *(evntbuf) >> 31 ) == 0 ){ val32 = *(evntbuf++);
@@ -354,7 +356,9 @@ int decode_griffin_event( unsigned int *evntbuf, int evntbuflen)
 	    ptr->pileup     = (val32 & 0x001F);
 	    if( ( *(evntbuf) >> 31 ) == 0 ){ ptr->master_id   = *(evntbuf++); }
 	    break;
-	 } else { // if dtype=6, maybe RF - extend sign from 30 to 32bits
+	 }
+    // JonR : I think all of this dtype==6 stuff is descant and BGO stuff that TITAN does not need
+    else { // if dtype=6, maybe RF - extend sign from 30 to 32bits
 	    if( ptr->dtype == 6 && (val32 & (1<<29)) ){ val32 |= 0xC0000000; }
 	    if( ++qtcount == 1 ){                                /* Energy */
 	       ptr->energy  = (ptr->dtype==6) ? val32 : val32 & 0x01ffffff;

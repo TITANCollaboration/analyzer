@@ -77,10 +77,13 @@ ANA_MODULE mdpp16_module = {
 extern TH1I **hit_hist;
 extern TH1I **sum_hist;
 //extern TH1I *ph_hist;
-extern TH1I **e_hist;
-extern TH1I **cfd_hist;
+//extern TH1I **e_hist;
+//extern TH1I **cfd_hist;
 extern TH1I **wave_hist;
+
 TH1I *ph_hist_mdpp[MAX_CHAN];
+TH1I *e_hist_mdpp[MAX_CHAN];
+TH1I *cfd_hist_mdpp[MAX_CHAN];
 
 int hist_init_roody();
 int hist_mdpp_init();
@@ -134,35 +137,33 @@ int hist_mdpp_init()
   int i;
   for (i = 0; i < MAX_CHAN; i++) { // Create each histogram for this channel
 
-   // if ( i >= num_chanhist ) { break; }
-     //     printf("222Do we get here?!?\n");
     sprintf(chan_name[i], "mdpp16_%i", i);
     printf("%d = %d[0x%08x]: %s\n", i, chan_address[i], chan_address[i], chan_name[i]);
     sprintf(title,  "%s_Pulse_Height",   chan_name[i] );
     sprintf(handle, "%s_Q",              chan_name[i] );
     ph_hist_mdpp[i] = H1_BOOK(handle, title, ENERGY_BINS, 0, ENERGY_BINS);
-    //      printf("Lets see if we crash..%i\n", ph_hist_mdpp[0]);
-      //ph_hist_mdpp[0] -> GetBinContent(ph_hist_mdpp[0],0);
 
 //    ph_hist[i] = H1_BOOK(handle, title, E_SPEC_LENGTH, 0, E_SPEC_LENGTH);
-/* JONR
     sprintf(title,  "%s_Energy",         chan_name[i] );
     sprintf(handle, "%s_E",              chan_name[i] );
-    e_hist[i] = H1_BOOK(handle, title, E_SPEC_LENGTH, 0, E_SPEC_LENGTH);
+    e_hist_mdpp[i] = H1_BOOK(handle, title, E_SPEC_LENGTH, 0, E_SPEC_LENGTH);
+
     sprintf(title,  "%s_Time",           chan_name[i] );
     sprintf(handle, "%s_T",              chan_name[i] );
-    cfd_hist[i] = H1_BOOK(handle, title, T_SPEC_LENGTH, 0, T_SPEC_LENGTH);
+    cfd_hist_mdpp[i] = H1_BOOK(handle, title, T_SPEC_LENGTH, 0, T_SPEC_LENGTH);
+    /* JONR
+
     sprintf(title,  "%s_Waveform",       chan_name[i] );
     sprintf(handle, "%s_w",              chan_name[i] );
     wave_hist[i] = H1_BOOK(handle, title, WV_SPEC_LENGTH, 0, WV_SPEC_LENGTH);
-  }
-  for (i = 0; i < N_HITPAT; i++) { // Create Hitpattern spectra
-    hit_hist[i] = H1_BOOK(hit_names[i], hit_titles[i], MAX_CHAN, 0, MAX_CHAN);
-  }
-  for (i = 0; i < N_SUM; i++) { // Create Sum spectra
-    sum_hist[i] = H1_BOOK(sum_names[i], sum_titles[i], E_SPEC_LENGTH, 0, E_SPEC_LENGTH);
-  } JONR END*/
     }
+    for (i = 0; i < N_HITPAT; i++) { // Create Hitpattern spectra
+    hit_hist[i] = H1_BOOK(hit_names[i], hit_titles[i], MAX_CHAN, 0, MAX_CHAN);
+    }
+    for (i = 0; i < N_SUM; i++) { // Create Sum spectra
+    sum_hist[i] = H1_BOOK(sum_names[i], sum_titles[i], E_SPEC_LENGTH, 0, E_SPEC_LENGTH);
+    } JONR END*/
+  }
   return (0);
 }
 
@@ -177,8 +178,8 @@ int mdpp16_event(EVENT_HEADER *pheader, void *pevent)
   int dsig, fix, flags = 0, t, chan, evdata;
   uint32_t ts; // needed for 30-bit ts
   int esig, counter;
-  int evadcdata, evtdcdata, evrstdata, extts, trigchan;
-  static int evcount;
+  int evadcdata = 0, evtdcdata, evrstdata, extts, trigchan;
+  static int evcount = 0;
 
   /* Added these to give a time interval to accrue counts. Current bugs:
      - drop in count rate at regular intervals. For INTERVAL=5, counts drop every 5 bins... odd
@@ -206,8 +207,9 @@ int mdpp16_event(EVENT_HEADER *pheader, void *pevent)
 
   // bank_len defined here. bk_locate(event,name,pdata) finds "MDPP" in event and returns bank length
   if ( (bank_len = bk_locate(pevent, "MDPP", &data) ) == 0 ) { return (0); }
+  printf("Bank Length : %i\n", bank_len);
   ++evcount;
-  debug = 1;
+  debug = 0;
   if ( debug ) {
     printf("Event Dump ...\n");
     for (i = 0; i < bank_len; i += 4) {
@@ -252,9 +254,9 @@ int mdpp16_event(EVENT_HEADER *pheader, void *pevent)
       }
 
       // hHitPat->Fill( chan );
-
-      else if (     trigchan < 16 ) { // ADC value caught
+      else if ( trigchan < 16 ) { // ADC value caught
         chan      = (data[i] >> 16) & 0x1F;
+        printf("Channel : %i\n", chan);
         evadcdata = (data[i] >> 0 ) & 0xFFFF;
       }
       else if (trigchan < 32) { // TDC time difference caught if above 16 and less than 32
@@ -271,21 +273,12 @@ int mdpp16_event(EVENT_HEADER *pheader, void *pevent)
     if ( dsig == 3 ) {
       ts =  ((data[i] >> 0) & 0x3FFFFFFF); // concatenate 14 bits and 16 bits...
     }
-    //hEnergy          [chan]-> Fill(evadcdata); // raw ADC
-  }
-    printf("Is it just a flag thing? If it got here but not the end one it is..%i\n", evadcdata);
+
     if (flags == 0) {
-//JON     hEnergy_flagsrm[chan]-> Fill(evadcdata); // raw ADC, flags removed
-      printf("Adding entry for energy hit %i on channel : %i\n", evadcdata, chan);
-       //ph_hist[chan]-> Fill(evadcdata); // raw ADC, flags removed
-   //   ph_hist[chan] -> Fill(ph_hist[chan],  (int)15,     1);
-      printf("Lets see if we crash..%i\n", ph_hist_mdpp[chan]);
-      //ph_hist_mdpp[0] -> GetBinContent(ph_hist_mdpp[0],0);
-
-      //ph_hist_mdpp[0] -> Fill(ph_hist_mdpp[0],  1,     1);
-
-      ph_hist_mdpp[chan] -> Fill(ph_hist_mdpp[chan],  (int)evadcdata,     1);
-      printf("Do we crash here?\n");
+      if (evadcdata <= ENERGY_BINS && chan < 16) {
+        printf("Adding entry for energy hit %i on channel : %i\n", evadcdata, chan);
+        ph_hist_mdpp[chan] -> Fill(ph_hist_mdpp[chan],  (int)evadcdata,     1);
+      }
     }
 //JON  hEnergy_vs_ts    [chan]-> Fill(evadcdata, ts/16000000);
     //JON hTDC             [chan]-> Fill(evtdcdata); // TDC value (event time after window opened)
@@ -296,17 +289,18 @@ int mdpp16_event(EVENT_HEADER *pheader, void *pevent)
     /* if (flags==0){ // Fill ADC data only when no flags are on */
     /*   hEnergy_flagsrm[chan]-> Fill(evadcdata); */
     /* } */
-    esig    = (data[i] >> 30) & 0x3;
-    counter = (data[i] >> 0) & 0x3FFFFFFF; // low 30bits
-    if ( debug ) {
-      printf("Trailer ...\n");
-      printf("   esig  =%d    counter=%d\n", esig, counter);
-      printf("\n");
-    }
-
-    if ( hsig != 1 || esig != 3 || t != 0 || subhead != 0 || mod_id != 1 ) {
-      err = 1;
-    }
-    //if( err == 1 ){ printf("Error: event %d\n", evcount); }
-    return (0);
   }
+  esig    = (data[i] >> 30) & 0x3;
+  counter = (data[i] >> 0) & 0x3FFFFFFF; // low 30bits
+  if ( debug ) {
+    printf("Trailer ...\n");
+    printf("   esig  =%d    counter=%d\n", esig, counter);
+    printf("\n");
+  }
+
+  if ( hsig != 1 || esig != 3 || t != 0 || subhead != 0 || mod_id != 1 ) {
+    err = 1;
+  }
+  //if( err == 1 ){ printf("Error: event %d\n", evcount); }
+  return (0);
+}

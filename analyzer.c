@@ -20,7 +20,7 @@ ANA_MODULE *griffin_trigger_module[] = { &griffin_module, NULL };
 ANA_MODULE *mdpp_trigger_module[] = { &mdpp16_module, NULL };
 
 BANK_LIST griffin_ana_trigger_bank_list[] = { /* online banks */
-  {"GRF3", TID_DWORD, 256, NULL}, {"GRF4", TID_DWORD, 256, NULL}, {""} ,
+  {"GRF4", TID_DWORD, 256, NULL}, {""} ,
 };
 BANK_LIST mdpp_ana_trigger_bank_list[] = { /* online banks */
   {"MDPP", TID_DWORD, 256, NULL}, {""} ,
@@ -30,8 +30,8 @@ BANK_LIST mdpp_ana_trigger_bank_list[] = { /* online banks */
 //};
 
 ANALYZE_REQUEST analyze_request[] = {
-     {"Trigger",                  /* equipment name */
-    {1,                         /* event ID */
+     {"GRIF16_analyzer",                  /* equipment name */
+    {200,                         /* event ID */
      TRIGGER_ALL,               /* trigger mask */
      //GET_SOME,                  /* get some events */ /* Removed ?? */
      GET_NONBLOCKING,           /* get some events */ /* later midas's */
@@ -44,8 +44,9 @@ ANALYZE_REQUEST analyze_request[] = {
     1000,                       /* RWNT buffer size */
     TRUE,                       /* Use tests for this event */
     },
-        {"mdpp16_analyser",                  /* equipment name */
-    {1,                         /* event ID */
+
+    {"mdpp16_analyser",                  /* equipment name */
+    {400,                         /* event ID */
      TRIGGER_ALL,               /* trigger mask */
      //GET_SOME,                  /* get some events */ /* Removed ?? */
      GET_NONBLOCKING,           /* get some events */ /* later midas's */
