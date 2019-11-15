@@ -30,7 +30,7 @@ BANK_LIST mdpp_ana_trigger_bank_list[] = { /* online banks */
 //};
 
 ANALYZE_REQUEST analyze_request[] = {
-     {"GRIF16_analyzer",                  /* equipment name */
+     {"GRIF16",                  /* equipment name */
     {200,                         /* event ID */
      TRIGGER_ALL,               /* trigger mask */
      //GET_SOME,                  /* get some events */ /* Removed ?? */
@@ -45,7 +45,7 @@ ANALYZE_REQUEST analyze_request[] = {
     TRUE,                       /* Use tests for this event */
     },
 
-    {"mdpp16_analyser",                  /* equipment name */
+    {"MDPP16",                  /* equipment name */
     {400,                         /* event ID */
      TRIGGER_ALL,               /* trigger mask */
      //GET_SOME,                  /* get some events */ /* Removed ?? */
