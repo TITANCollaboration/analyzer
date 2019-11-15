@@ -40,7 +40,9 @@ ANA_MODULE griffin_module = {
 #define MAX_SAMPLE_LEN  4096
 #define ENERGY_BINS    65536 /* 65536 131072 262144 */
 #define NUM_CLOVER        16
-#define MAX_CHAN        1024
+//#define MAX_CHAN        1024
+#define MAX_CHAN        16
+
 #define STRING_LEN       256
 #define MIDAS_STRLEN      32
 #define MAX_ADDRESS  0x10000
@@ -190,6 +192,8 @@ int hist_init()
    char title[STRING_LEN], handle[STRING_LEN];
    int i;
    for(i=0; i<MAX_CHAN; i++){ // Create each histogram for this channel
+   sprintf(chan_name[i], "grif16_%i", i);
+
       if( i >= num_chanhist ){ break; }
       printf("%d = %d[0x%08x]: %s\n", i, chan_address[i], chan_address[i], chan_name[i]);
       sprintf(title,  "%s_Pulse_Height",   chan_name[i] );

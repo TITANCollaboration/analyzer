@@ -20,7 +20,9 @@
 #define MAX_SAMPLE_LEN  4096
 #define ENERGY_BINS    65536 /* 65536 131072 262144 */
 #define NUM_CLOVER        16
-#define MAX_CHAN        1024
+//#define MAX_CHAN        1024
+#define MAX_CHAN        16
+
 #define STRING_LEN       256
 #define MIDAS_STRLEN      32
 #define MAX_ADDRESS  0x10000
