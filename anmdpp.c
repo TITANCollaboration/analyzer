@@ -192,7 +192,7 @@ int mdpp16_event(EVENT_HEADER *pheader, void *pevent)
   time_t currentTime = time(NULL);
   static int rates[NUM_CHAN];
   float cal_energy;
-  printf("We got an MDPP16 event!\n");
+  //printf("We got an MDPP16 event!\n");
   // Added this chunk for the count rate vs time histogram. startTime is run, beginTime is interval
   if ( startTime == 0 ) {
     startTime = beginTime = currentTime;
@@ -209,7 +209,7 @@ int mdpp16_event(EVENT_HEADER *pheader, void *pevent)
 
   // bank_len defined here. bk_locate(event,name,pdata) finds "MDPP" in event and returns bank length
   if ( (bank_len = bk_locate(pevent, "MDPP", &data) ) == 0 ) { return (0); }
-  printf("Bank Length : %i\n", bank_len);
+  //printf("Bank Length : %i\n", bank_len);
   ++evcount;
   debug = 0;
   if ( debug ) {
@@ -258,7 +258,7 @@ int mdpp16_event(EVENT_HEADER *pheader, void *pevent)
       // hHitPat->Fill( chan );
       else if ( trigchan < 16 ) { // ADC value caught
         chan      = (data[i] >> 16) & 0x1F;
-        printf("Channel : %i\n", chan);
+        //printf("Channel : %i\n", chan);
         evadcdata = (data[i] >> 0 ) & 0xFFFF;
       }
       else if (trigchan < 32) { // TDC time difference caught if above 16 and less than 32
@@ -278,7 +278,7 @@ int mdpp16_event(EVENT_HEADER *pheader, void *pevent)
 
     if (flags == 0) {
       if (evadcdata <= ENERGY_BINS && chan < 16) {
-        printf("Adding entry for energy hit %i on channel : %i\n", evadcdata, chan);
+        //printf("Adding entry for energy hit %i on channel : %i\n", evadcdata, chan);
         ph_hist_mdpp[chan] -> Fill(ph_hist_mdpp[chan],  (int)evadcdata,     1);
       }
     }

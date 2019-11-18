@@ -103,7 +103,7 @@ int handle_connection(int fd)
    // curl "http://titan01.triumf.ca:9093/?cmd=callspechandler&spectrum1=spec1&spectrum2=spec2"
    case SPECLIST:        // fprintf(stdout,"COMMAND: List\n"       );
       send_spectrum_list(fd); return (0);
-   case CALLSPECHANDLER:  printf("CMD: Get %d spec from Handler\n", arg);
+   case CALLSPECHANDLER:  //printf("CMD: Get %d spec from Handler\n", arg);
       send_spectrum(arg, fd); return (0);
    case NO_COMMAND:      // printf("No command received.\n");
       sprintf(filename, "%s%s", ROOTDIR, url);
@@ -177,10 +177,10 @@ int send_spectrum(int num, int fd)
 {
    int i, j;  char temp[256];
    TH1I *hist;
-   printf("Send Spectrium : Num : %i, FD : %i\n", num, fd);
+   //printf("Send Spectrium : Num : %i, FD : %i\n", num, fd);
    put_line(fd, HIST_HDR, strlen(HIST_HDR) );
    for (j = 0; j < num; j++) {
-      printf("hist_list : %s", histo_list[j]);
+      //printf("hist_list : %s", histo_list[j]);
       if ( j > 0 ) { put_line(fd, HIST_SEP, strlen(HIST_SEP) ); }
       if ( (hist = hist_querytitle(histo_list[j])) == NULL ) { // don't have it
          sprintf(temp, "\'%s\':NULL", histo_list[j] );

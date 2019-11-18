@@ -245,7 +245,6 @@ int griffin(EVENT_HEADER *pheader, void *pevent)
 
 
    } else {
-      printf("Getting here!!");
       return(-1);
    }
    while( words > 0 ){  // there may be many fragments in each event ...
@@ -290,7 +289,7 @@ int decode_griffin_event( unsigned int *evntbuf, int evntbuflen)
    int type, value, qtcount=0, chan;
    static int event_count;
    short *wave_len = NULL;
-   printf("Going to defcode griffin event... \n");
+   //printf("Going to defcode griffin event... \n");
    // Clear ptr at start of buffer and check the first word is a good header
    memset(ptr, 0, sizeof(Grif_event) );
    if( ((*evntbuf) & 0x80000000) != 0x80000000 ){
