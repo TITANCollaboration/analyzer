@@ -279,13 +279,13 @@ int unpack_griffin_bank(unsigned *buf, int len)
 
 int GetIDfromAddress(int addr)
 {
-   int id;
-   //for(i=0; i<NUM_ODB_CHAN; i++){
-   //   if( chan_address[i] == addr ){ return(i); }
-   // }
-   if( (id = address_chan[addr]) == -1 ){
-      fprintf(stderr,"getID: unknown address: %7d[0x%04x]\n", addr, addr);
-   }
+   int id = addr; // We only have a grif16 no GRIFC so this is going weird 
+//   for(int i=0; i<MAX_CHAN; i++){
+ //     if( chan_address[i] == addr ){ return(i); }
+ //   }
+ //  if( (id = address_chan[addr]) == -1 ){
+ //     fprintf(stderr,"getID: unknown address: %7d[0x%04x]\n", addr, addr);
+ //  }
    return(id);
 }
 
@@ -456,7 +456,7 @@ int process_decoded_fragment(Grif_event *ptr)
 {
    time_t current_time = time(NULL);
    static int last_sample, event;
-   int i, chan, ecal, len;
+   int i, chan = 0, ecal, len;
    float energy;
    short sample;
 
@@ -474,8 +474,9 @@ int process_decoded_fragment(Grif_event *ptr)
       memset(rate_data, 0, sizeof(rate_data));
       last_reset = current_time;
    }*/
-
-   if( (chan = ptr->chan) == -1 ){ return(0); } // msg printed above for these
+//   chan = ptr->address;
+   chan = ptr->chan;
+   if( chan == -1 ){ return(0); } // msg printed above for these
    if( chan >= num_chanhist ){
       fprintf(stderr,"process_event: ignored event in chan:%d [0x%04x]\n",
             	                                      chan, ptr->address );
