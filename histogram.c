@@ -128,7 +128,7 @@ TH1I *H1_BOOK(char *name, char *title, int nbins, int arg2, int arg3)
    }
    if( (tlen=strlen(title)) >= TITLE_LENGTH  ){ tlen = TITLE_LENGTH-1; }
    if( (hlen=strlen(name))  >= HANDLE_LENGTH ){ hlen = HANDLE_LENGTH-1; }
-   printf("Hist title in H1_BOOK webserver.c : %s\n", title);
+   //printf("Hist title in H1_BOOK webserver.c : %s\n", title);
    memcpy(result->path, current_path, strlen(current_path) );
    memcpy(result->handle, name, hlen);
    memcpy(result->title, title, tlen);

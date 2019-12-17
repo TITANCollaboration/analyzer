@@ -127,7 +127,6 @@ int mdpp16_init(void)
 
 int hist_mdpp_init()
 {
-  printf("Do we get here?!?\n");
   char hit_titles[N_HITPAT][32] = {
     "HITPATTERN_Energy",   "HITPATTERN_Time",
     "HITPATTERN_Waveform", "HITPATTERN_Pulse_Height", "HITPATTERN_Rate"
@@ -177,7 +176,7 @@ int mdpp16_event(EVENT_HEADER *pheader, void *pevent)
   DWORD *data;
 
   int hsig, subhead, mod_id, tdc_res, adc_res, nword;
-  int dsig, fix, flags = 0, t, chan, evdata;
+  int dsig, fix, flags = 0, t, chan = 100, evdata;
   uint32_t ts; // needed for 30-bit ts
   int esig, counter;
   int evadcdata = 0, evtdcdata, evrstdata, extts, trigchan;
@@ -277,7 +276,7 @@ int mdpp16_event(EVENT_HEADER *pheader, void *pevent)
     }
 
     if (flags == 0) {
-      if (evadcdata <= ENERGY_BINS && chan < 16) {
+      if (evadcdata <= ENERGY_BINS && chan < MAX_CHAN) {
         //printf("Adding entry for energy hit %i on channel : %i\n", evadcdata, chan);
         ph_hist_mdpp[chan] -> Fill(ph_hist_mdpp[chan],  (int)evadcdata,     1);
       }

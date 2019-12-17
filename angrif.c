@@ -36,13 +36,13 @@ ANA_MODULE griffin_module = {
    NULL,                   /* initial parameters    */
 };
 
-#define NUM_ODB_CHAN     459 // size of msc table in odb
+#define NUM_ODB_CHAN     16 // size of msc table in odb
 #define MAX_SAMPLE_LEN  4096
 #define ENERGY_BINS    65536 /* 65536 131072 262144 */
 #define NUM_CLOVER        16
 //#define MAX_CHAN        1024
 #define MAX_CHAN        16
-
+#define RATE_COUNT_INTERVAL 5 // This is in seconds, controls how often the per channel rate data is updated
 #define STRING_LEN       256
 #define MIDAS_STRLEN      32
 #define MAX_ADDRESS  0x10000
@@ -68,7 +68,7 @@ static int process_waveforms = 1;
 static Grif_event  grif_event;
 static Grif_event *ptr = &grif_event;
 static short       waveform[MAX_SAMPLE_LEN];
-static int        rate_data[MAX_CHAN];
+//static int        rate_data[MAX_CHAN];
 //static float          gains[MAX_CHAN];
 //static float        offsets[MAX_CHAN];
 static char       chan_name[MAX_CHAN][MIDAS_STRLEN];
@@ -80,6 +80,9 @@ extern HNDLE hDB; // Odb Handle
 
 float   gains[NUM_ODB_CHAN];
 float offsets[NUM_ODB_CHAN];
+
+time_t last_update = time(NULL);
+static int addr_count[MAX_CHAN + 1];// = {0};  // this will be used to calculate rates per channel
 
 int decode_griffin_event( unsigned int *evntbuf, int evntbuflen);
 int process_decoded_fragment(Grif_event *ptr);
@@ -195,7 +198,7 @@ int hist_init()
    sprintf(chan_name[i], "grif16_%i", i);
 
       if( i >= num_chanhist ){ break; }
-      printf("%d = %d[0x%08x]: %s\n", i, chan_address[i], chan_address[i], chan_name[i]);
+      //printf("%d = %d[0x%08x]: %s\n", i, chan_address[i], chan_address[i], chan_name[i]);
       sprintf(title,  "%s_Pulse_Height",   chan_name[i] );
       sprintf(handle, "%s_Q",              chan_name[i] );
       ph_hist[i] = H1_BOOK(handle, title, E_SPEC_LENGTH, 0, E_SPEC_LENGTH);
@@ -222,10 +225,12 @@ static time_t bor_time=-1, start_time=-1;
 static unsigned start_pkt;
 int griffin_bor(INT run_number)
 {
-   bor_time = time(NULL); start_time = -1;
+   printf("Starting RUN!!!\n");
+   bor_time = time(NULL); 
+   start_time = -1;
    read_odb_gains();
    Zero_Histograms();
-   memset(rate_data, 0, sizeof(rate_data));
+   //memset(rate_data, 0, sizeof(rate_data));
    printf("Success!\n");
    return SUCCESS;
 }
@@ -283,9 +288,26 @@ int GetIDfromAddress(int addr)
    }
    return(id);
 }
+
+int report_counts(int interval)
+{
+  for (int i = 0; i <= MAX_CHAN; i++) {
+    if ( addr_count[i] == 0 ) { continue; }
+   // fprintf(stdout, "   Chan:0x%04x [%5d] - %4d/s\n", i, i, addr_count[i] / interval );
+    // Put code here for InfluxDB...
+  }
+  memset(addr_count, 0, sizeof(addr_count) );
+  return (0);
+}
+
 int decode_griffin_event( unsigned int *evntbuf, int evntbuflen)
 {
-  unsigned int *evntbufend = evntbuf+evntbuflen, *evstrt=evntbuf, val32;
+   time_t curr_time = time(NULL);  // Get current unix time
+   if ( (curr_time - last_update) >= RATE_COUNT_INTERVAL ) { 
+      report_counts(curr_time - last_update);
+      last_update = curr_time;
+   }   
+   unsigned int *evntbufend = evntbuf+evntbuflen, *evstrt=evntbuf, val32;
    int type, value, qtcount=0, chan;
    static int event_count;
    short *wave_len = NULL;
@@ -307,6 +329,9 @@ int decode_griffin_event( unsigned int *evntbuf, int evntbuflen)
          ptr->dtype  = ((value & 0x0000F) >>  0);
          ptr->address= ((value & 0xFFFF0) >>  4);
          chan = ptr->chan = GetIDfromAddress(ptr->address);
+         if (chan <= MAX_CHAN ) {
+            ++addr_count[chan];
+         }
          //ptr->chan   = ((value & 0x00FF0) >>  4);
          //grifc_port  = ((value & 0x0F000) >> 12);
          //master_port = ((value & 0xF0000) >> 16);
@@ -424,8 +449,8 @@ void checkdata(int len, unsigned int *data) // check test event data
    ++event; prevword = data[len-1];
 }
 
-#define RESET_SECONDS     10
-static time_t last_reset;
+//#define RESET_SECONDS     1
+//static time_t last_reset;
 #define TEST_HITPAT(var,bit) (var[(int)bit/32] & (1<<(bit%32)))
 int process_decoded_fragment(Grif_event *ptr)
 {
@@ -441,13 +466,14 @@ int process_decoded_fragment(Grif_event *ptr)
    } else { ++event; }
 
    // this should be done in a scalar routine
-   if( current_time - last_reset > RESET_SECONDS ){
+/*   if( current_time - last_reset > RESET_SECONDS ){
       for(i=0; i<MAX_CHAN; i++){
+         printf("Rate Data : Chan : %i, Rate : %i\n", i, rate_data[i]);
 	//spec_store_hit_data[4][i] = rate_data[i];
       }
       memset(rate_data, 0, sizeof(rate_data));
       last_reset = current_time;
-   }
+   }*/
 
    if( (chan = ptr->chan) == -1 ){ return(0); } // msg printed above for these
    if( chan >= num_chanhist ){
@@ -458,7 +484,7 @@ int process_decoded_fragment(Grif_event *ptr)
    energy = ( ptr->integ == 0 ) ? 0 : ptr->energy/ptr->integ;
    ecal   = spread(energy) * gains[chan] + offsets[chan];
 
-   ++rate_data[chan];
+   //++rate_data[chan];
    ph_hist[chan] -> Fill(ph_hist[chan],  (int)energy,     1);
    hit_hist[3]   -> Fill(hit_hist[3],    chan,            1);
    e_hist[chan]  -> Fill(e_hist[chan],   (int)ecal,       1);
@@ -492,6 +518,5 @@ int process_decoded_fragment(Grif_event *ptr)
          wave_hist[chan]  -> SetBinContent(wave_hist[chan], i, sample );
       }
    }
-
    return(0);
 }
