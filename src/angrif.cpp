@@ -2,17 +2,26 @@
  *       Simple GRIFFIN analyser
  *****************************************************************************/
 
+#include <iostream>
 #include <stdio.h>
 #include <stdlib.h> /* rand() */
 #include <time.h>
 #include <unistd.h> /* usleep */
 #include <math.h>
 #include <string.h>  /* memset */
+//#include <string>
 
 #include "midas.h"
 #include "histogram.h"
 #include "web_server.h"
 
+#include "InfluxDBFactory.h"
+#include "Transport.h"
+#include "Point.h"
+
+using namespace influxdb;
+
+   
 #define TRUE 1
 #define FALSE 0
 
@@ -42,7 +51,7 @@ ANA_MODULE griffin_module = {
 #define NUM_CLOVER        16
 //#define MAX_CHAN        1024
 #define MAX_CHAN        16
-#define RATE_COUNT_INTERVAL 5 // This is in seconds, controls how often the per channel rate data is updated
+#define RATE_COUNT_INTERVAL 1 // This is in seconds, controls how often the per channel rate data is updated
 #define STRING_LEN       256
 #define MIDAS_STRLEN      32
 #define MAX_ADDRESS  0x10000
@@ -76,6 +85,15 @@ static short   chan_address[MAX_CHAN];
 static int     num_chanhist;
 static short   address_chan[MAX_ADDRESS];
 
+//INFLUX DB SETTINGS
+//auto influxdb_conn = 0;
+static std::string influxdb_hostname = "titan05.triumf.ca";
+static std::string influxdb_port = "8086";
+static std::string influxdb_dbname = "titan";
+std::string influx_connection_string = "http://" + influxdb_hostname + ":" + influxdb_port + "/?db=" + influxdb_dbname;
+auto influxdb_conn = influxdb::InfluxDBFactory::Get(influx_connection_string);
+  
+
 extern HNDLE hDB; // Odb Handle
 
 float   gains[NUM_ODB_CHAN];
@@ -92,6 +110,9 @@ int unpack_griffin_bank(unsigned *buf, int len);
 
 int griffin_init()
 {  int i;
+ //  std::string influx_connection_string = "http://" + influxdb_hostname + ":8086/?db=test";
+   std::cout << "My connection string : "<<  influx_connection_string << "\n";
+  // influxdb_conn = influxdb::InfluxDBFactory::Get("http://localhost:8086/?db=test");
    read_odb_gains();  // Print the loaded gains and offsets
    fprintf(stdout,"\nRead Gain/Offset values from ODB\nIndex\tGain\tOffset\n");
    for(i=0; i<NUM_ODB_CHAN; i++){
@@ -291,11 +312,26 @@ int GetIDfromAddress(int addr)
 
 int report_counts(int interval)
 {
-  for (int i = 0; i <= MAX_CHAN; i++) {
-    if ( addr_count[i] == 0 ) { continue; }
+   
+  std::string grif_chan = "";
+   Point mypoint = Point{"grif16_rate"};
+
+   for (int i = 0; i <= MAX_CHAN; i++) {
+      if ( addr_count[i] == 0 ) { continue; }
    // fprintf(stdout, "   Chan:0x%04x [%5d] - %4d/s\n", i, i, addr_count[i] / interval );
     // Put code here for InfluxDB...
+   //auto influxdb = influxdb::InfluxDBFactory::Get("http://localhost:8086/?db=test");
+//   influxdb_conn->write(Point{"GRIFRATE"};
+   grif_chan = "grif_" + std::to_string(i);   
+   mypoint.addField(grif_chan, addr_count[i] / interval);
+//   std::cout << "My grif chan : " << grif_chan << "\n";   
+//   mypoint.addField("someval", 10);
+//   mypoint.addField("someotherval", 22);
+   
+//   influxdb_conn->write(Point{"test"} .addField("value", 10) .addTag("host", "localhost"));
   }
+   influxdb_conn->write(std::move(mypoint));
+
   memset(addr_count, 0, sizeof(addr_count) );
   return (0);
 }
