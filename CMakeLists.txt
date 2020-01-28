@@ -6,6 +6,8 @@ cmake_minimum_required(VERSION 2.6 FATAL_ERROR)
 set(CMAKE_C_COMPILER "gcc")
 set(CMAKE_CXX_COMPILER "g++")
 
+add_definitions ( -DUSE_INFLUXDB=ON )
+
 project(analyzer)
 
 set(CMAKE_CXX_FLAGS "-std=c++17 -Wall ${CMAKE_CXX_FLAGS}")
