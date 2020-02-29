@@ -20,47 +20,47 @@ ANA_MODULE *griffin_trigger_module[] = { &griffin_module, NULL };
 ANA_MODULE *mdpp_trigger_module[] = { &mdpp16_module, NULL };
 
 BANK_LIST griffin_ana_trigger_bank_list[] = { /* online banks */
-  {"GRF4", TID_DWORD, 256, NULL}, {""} ,
+        {"GRF4", TID_DWORD, 256, NULL}, {""},
 };
 BANK_LIST mdpp_ana_trigger_bank_list[] = { /* online banks */
-  {"MDPP", TID_DWORD, 256, NULL}, {""} ,
+        {"MDPP", TID_DWORD, 256, NULL}, {""},
 };
 //BANK_LIST ana_trigger_bank_list[] = { /* online banks */
 //  {"GRF3", TID_DWORD, 256, NULL}, {""} , {"GRF4", TID_DWORD, 256, NULL}, {"MDPP", TID_DWORD, 256, NULL}, {""}
 //};
 
 ANALYZE_REQUEST analyze_request[] = {
-     {"GRIF16",                  /* equipment name */
-    {200,                         /* event ID */
-     TRIGGER_ALL,               /* trigger mask */
-     //GET_SOME,                  /* get some events */ /* Removed ?? */
-     GET_NONBLOCKING,           /* get some events */ /* later midas's */
-     "SYSTEM",                  /* event buffer */
-     TRUE,                      /* enabled */
-     "", "",},
-    NULL,                       /* analyzer routine */
-    griffin_trigger_module,             /* module list */
-    griffin_ana_trigger_bank_list,      /* bank list */
-    1000,                       /* RWNT buffer size */
-    TRUE,                       /* Use tests for this event */
-    },
+        {"GRIF16",               /* equipment name */
+         {200,                    /* event ID */
+       TRIGGER_ALL,             /* trigger mask */
+       //GET_SOME,                  /* get some events */ /* Removed ?? */
+       GET_NONBLOCKING,         /* get some events */ /* later midas's */
+       "SYSTEM",                /* event buffer */
+       TRUE,                    /* enabled */
+       "", "",},
+         NULL,                  /* analyzer routine */
+         griffin_trigger_module,        /* module list */
+         griffin_ana_trigger_bank_list, /* bank list */
+         1000,                  /* RWNT buffer size */
+         TRUE,                  /* Use tests for this event */
+        },
 
-    {"MDPP16",                  /* equipment name */
-    {400,                         /* event ID */
-     TRIGGER_ALL,               /* trigger mask */
-     //GET_SOME,                  /* get some events */ /* Removed ?? */
-     GET_NONBLOCKING,           /* get some events */ /* later midas's */
-     "SYSTEM",                  /* event buffer */
-     TRUE,                      /* enabled */
-     "", "",},
-    NULL,                       /* analyzer routine */
-    mdpp_trigger_module,             /* module list */
-    mdpp_ana_trigger_bank_list,      /* bank list */
-    1000,                       /* RWNT buffer size */
-    TRUE,                       /* Use tests for this event */
-    },
+        {"MDPP16",              /* equipment name */
+         {400,                    /* event ID */
+      TRIGGER_ALL,              /* trigger mask */
+      //GET_SOME,                  /* get some events */ /* Removed ?? */
+      GET_NONBLOCKING,          /* get some events */ /* later midas's */
+      "SYSTEM",                 /* event buffer */
+      TRUE,                     /* enabled */
+      "", "",},
+         NULL,                  /* analyzer routine */
+         mdpp_trigger_module,        /* module list */
+         mdpp_ana_trigger_bank_list, /* bank list */
+         1000,                  /* RWNT buffer size */
+         TRUE,                  /* Use tests for this event */
+        },
 
- {""}
+        {""}
 };
 
 /*--------------------------------------------------------------------------*/
@@ -68,21 +68,31 @@ ANALYZE_REQUEST analyze_request[] = {
 volatile int shutdown_webserver;
 static pthread_t web_thread;
 INT analyzer_init(){
-    // Create new thread which launches the Web server
-    int a1=1;
-    pthread_create(&web_thread, NULL,(void* (*)(void*))web_server_main, &a1);
+        // Create new thread which launches the Web server
+        int a1=1;
+        pthread_create(&web_thread, NULL,(void* (*)(void*))web_server_main, &a1);
 
-    return SUCCESS;
+        return SUCCESS;
 }
 
 INT analyzer_exit(){
-   printf("waiting for server to shutdown ...\n");
-   shutdown_webserver = 1;
-   pthread_join(web_thread, NULL);
-   return CM_SUCCESS;
+        printf("waiting for server to shutdown ...\n");
+        shutdown_webserver = 1;
+        pthread_join(web_thread, NULL);
+        return CM_SUCCESS;
 }
-INT ana_begin_of_run(INT run_number, char *error){ return CM_SUCCESS; }
-INT ana_end_of_run(INT run_number, char *error){ return CM_SUCCESS; }
-INT ana_pause_run(INT run_number, char *error){ return CM_SUCCESS; }
-INT ana_resume_run(INT run_number, char *error){ return CM_SUCCESS; }
-INT analyzer_loop(){ return CM_SUCCESS; }
+INT ana_begin_of_run(INT run_number, char *error){
+        return CM_SUCCESS;
+}
+INT ana_end_of_run(INT run_number, char *error){
+        return CM_SUCCESS;
+}
+INT ana_pause_run(INT run_number, char *error){
+        return CM_SUCCESS;
+}
+INT ana_resume_run(INT run_number, char *error){
+        return CM_SUCCESS;
+}
+INT analyzer_loop(){
+        return CM_SUCCESS;
+}

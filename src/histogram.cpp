@@ -12,140 +12,140 @@
 
 static char current_path[FOLDER_PATH_LENGTH];
 static void *histogram_list[MAX_HISTOGRAMS];
-static int  next_histogram;
+static int next_histogram;
 static int check_folder(char *folder); // return valid length (or -1) if invalid
 
 int open_folder(char* folder)
 {
-   char *path = current_path;
-   int len;
+	char *path = current_path;
+	int len;
 
-   if( (len = check_folder(folder)) <= 0 ){ return(-1); }
-   if( len + strlen(path) >= FOLDER_PATH_LENGTH ){
-      fprintf(stderr,"folder path longer than %d\n", FOLDER_PATH_LENGTH );
-      return(-1);
-   }
-   if( path[0] == 0 ){ memcpy(path, folder, len); }
-   else { sprintf(&path[len], "/%s", folder); }
-   return(0);
+	if( (len = check_folder(folder)) <= 0 ) { return(-1); }
+	if( len + strlen(path) >= FOLDER_PATH_LENGTH ) {
+		fprintf(stderr,"folder path longer than %d\n", FOLDER_PATH_LENGTH );
+		return(-1);
+	}
+	if( path[0] == 0 ) { memcpy(path, folder, len); }
+	else { sprintf(&path[len], "/%s", folder); }
+	return(0);
 }
 
 int close_folder() // work back from end to next slash
 {
-   char *path = current_path;
-   int i, len = strlen(path);
-   if( path[len-1] == '/' ){ --len; } // remove trailing /
-   for(i=len-1; i>=0; i--){
-      if( path[len] == '/' ){ break; }
-   }
-   path[len] = '\0'; return(0);
+	char *path = current_path;
+	int i, len = strlen(path);
+	if( path[len-1] == '/' ) { --len; } // remove trailing /
+	for(i=len-1; i>=0; i--) {
+		if( path[len] == '/' ) { break; }
+	}
+	path[len] = '\0'; return(0);
 }
 
 int Zero_Histograms()
 {
-   int i;  TH1I *ptr;
-   for(i=0; i<next_histogram; i++){
-      ptr = (TH1I *)histogram_list[i];
-      TH1I_Reset(ptr);
-   }
+	int i;  TH1I *ptr;
+	for(i=0; i<next_histogram; i++) {
+		ptr = (TH1I *)histogram_list[i];
+		TH1I_Reset(ptr);
+	}
 }
 
 int TH1I_Reset(TH1I *thisptr)
 {
-   memset(thisptr->data, 0, thisptr->xbins*sizeof(float)); return(0);
-   thisptr->valid_bins    = thisptr->xbins;
-   thisptr->underflow     = 0;
-   thisptr->overflow      = 0;
-   thisptr->entries       = 0;
+	memset(thisptr->data, 0, thisptr->xbins*sizeof(float)); return(0);
+	thisptr->valid_bins    = thisptr->xbins;
+	thisptr->underflow     = 0;
+	thisptr->overflow      = 0;
+	thisptr->entries       = 0;
 }
 
 int TH1I_Fill(TH1I *thisptr, int bin, int count)
 {
-   (thisptr->entries)++;
+	(thisptr->entries)++;
 
-   if( bin <            0 ){ (thisptr->underflow)++; return(0); }
-   if( bin >= thisptr->xbins ){ (thisptr-> overflow)++; return(0); }
-   (thisptr->data[bin])+=count;
-   return(0);
+	if( bin <            0 ) { (thisptr->underflow)++; return(0); }
+	if( bin >= thisptr->xbins ) { (thisptr->overflow)++; return(0); }
+	(thisptr->data[bin])+=count;
+	return(0);
 }
 
 int TH1I_SetBinContent(TH1I *thisptr, int bin, int value)
 {
-   if( bin < 0 || bin >= thisptr->xbins ){ return(-1); }
-   (thisptr->data[bin])=value; return(0);
+	if( bin < 0 || bin >= thisptr->xbins ) { return(-1); }
+	(thisptr->data[bin])=value; return(0);
 }
 
 int TH1I_GetBinContent(TH1I *thisptr, int bin)
 {
-   if( bin < 0 || bin >= thisptr->xbins ){ return(0); }
-   return( (thisptr->data[bin]) );
+	if( bin < 0 || bin >= thisptr->xbins ) { return(0); }
+	return( (thisptr->data[bin]) );
 }
 
 int TH1I_SetValidLen(TH1I *thisptr, int bins)
 {
-   if( bins < 0 || bins >= thisptr->xbins ){ return(0); }
-   (thisptr->valid_bins)=bins; return(0);
+	if( bins < 0 || bins >= thisptr->xbins ) { return(0); }
+	(thisptr->valid_bins)=bins; return(0);
 }
 
 /* if thisptr starts being slow - add names to hash table */
 TH1I *hist_querytitle(char *name)
 {
-   TH1I *ptr;   int i;
-   for(i=0; i<next_histogram; i++){
-      //printf("Histogram that exists in histogram.c : %s", histogram_list[i]);
-     ptr = (TH1I *)histogram_list[i];
-      if( strcmp(name, ptr->title) == 0 ){ return( ptr ); }
-   }
-   return( NULL );
+	TH1I *ptr;   int i;
+	for(i=0; i<next_histogram; i++) {
+		//printf("Histogram that exists in histogram.c : %s", histogram_list[i]);
+		ptr = (TH1I *)histogram_list[i];
+		if( strcmp(name, ptr->title) == 0 ) { return( ptr ); }
+	}
+	return( NULL );
 }
 TH1I *hist_queryhandle(char *name)
 {
-   TH1I *ptr;   int i;
-   for(i=0; i<next_histogram; i++){
-     ptr = (TH1I *)histogram_list[i];
-      if( strcmp(name, ptr->handle) == 0 ){ return( ptr ); }
-   }
-   return( NULL );
+	TH1I *ptr;   int i;
+	for(i=0; i<next_histogram; i++) {
+		ptr = (TH1I *)histogram_list[i];
+		if( strcmp(name, ptr->handle) == 0 ) { return( ptr ); }
+	}
+	return( NULL );
 }
 //TH1I *hist_querynum(int num){}
 
 TH1I *H1_BOOK(char *name, char *title, int nbins, int arg2, int arg3)
 {
-   int tlen, hlen; TH1I *result;
+	int tlen, hlen; TH1I *result;
 
-   if( next_histogram >= MAX_HISTOGRAMS ){
-      fprintf(stderr,"H1_BOOK: max number of histograms:%d exceeded\n",
-	 MAX_HISTOGRAMS );
-      return(NULL);
-   }
-   if( (result = (TH1I *)malloc(sizeof(TH1I))) == NULL){
-      fprintf(stderr,"H1_BOOK: structure malloc failed\n");
-      return(NULL);
-   }
-   if( (result->data = (int *)malloc(nbins*sizeof(int))) == NULL){
-      fprintf(stderr,"H1_BOOK: data malloc failed\n");
-      free(result); return(NULL);
-   }
-   if( (tlen=strlen(title)) >= TITLE_LENGTH  ){ tlen = TITLE_LENGTH-1; }
-   if( (hlen=strlen(name))  >= HANDLE_LENGTH ){ hlen = HANDLE_LENGTH-1; }
-   //printf("Hist title in H1_BOOK webserver.c : %s\n", title);
-   memcpy(result->path, current_path, strlen(current_path) );
-   memcpy(result->handle, name, hlen);
-   memcpy(result->title, title, tlen);
-   memset(result->data, 0, nbins*sizeof(float) );
-   result->underflow     = 0;
-   result->overflow      = 0;
-   result->entries       = 0;
-   result->xbins         = nbins;
-   result->valid_bins    = nbins;
-   result->Reset         = &TH1I_Reset;
-   result->Fill          = &TH1I_Fill;
-   result->SetBinContent = &TH1I_SetBinContent;
-   result->GetBinContent = &TH1I_GetBinContent;
-   result->SetValidLen   = &TH1I_SetValidLen;
-   result->type          = FLOAT_1D;
-   histogram_list[next_histogram++] = (void *)result;
-   return(result);
+	if( next_histogram >= MAX_HISTOGRAMS ) {
+		fprintf(stderr,"H1_BOOK: max number of histograms:%d exceeded\n",
+		        MAX_HISTOGRAMS );
+		return(NULL);
+	}
+	if( (result = (TH1I *)malloc(sizeof(TH1I))) == NULL) {
+		fprintf(stderr,"H1_BOOK: structure malloc failed\n");
+		return(NULL);
+	}
+	if( (result->data = (int *)malloc(nbins*sizeof(int))) == NULL) {
+		fprintf(stderr,"H1_BOOK: data malloc failed\n");
+		free(result); return(NULL);
+	}
+	if( (tlen=strlen(title)) >= TITLE_LENGTH  ) { tlen = TITLE_LENGTH-1; }
+	if( (hlen=strlen(name))  >= HANDLE_LENGTH ) { hlen = HANDLE_LENGTH-1; }
+	//printf("Hist title in H1_BOOK webserver.c : %s\n", title);
+	memcpy(result->path, current_path, strlen(current_path) );
+	memcpy(result->handle, name, hlen);
+	memcpy(result->title, title, tlen);
+	memset(result->data, 0, nbins*sizeof(float) );
+	result->underflow     = 0;
+	result->overflow      = 0;
+	result->entries       = 0;
+	result->xbins         = nbins;
+	result->valid_bins    = nbins;
+	result->Reset         = &TH1I_Reset;
+	result->Fill          = &TH1I_Fill;
+	result->SetBinContent = &TH1I_SetBinContent;
+	result->GetBinContent = &TH1I_GetBinContent;
+	result->SetValidLen   = &TH1I_SetValidLen;
+	result->type          = FLOAT_1D;
+	histogram_list[next_histogram++] = (void *)result;
+	return(result);
 }
 
 /////////////////////////////////////////////////////////////////////////////
@@ -220,25 +220,24 @@ TH1I *H1_BOOK(char *name, char *title, int nbins, int arg2, int arg3)
 // max length ~256, no odd characters or /
 int check_folder(char *folder) // return valid length (or -1) if invalid
 {
-   int i, len;
+	int i, len;
 
-   for(i=0; i<FOLDER_PATH_LENGTH; i++){
-      if( folder[i] == '\0' ){ break; }
-   }
-   if( (len=i) >= FOLDER_PATH_LENGTH ){
-      fprintf(stderr,"folder longer than %d\n", FOLDER_PATH_LENGTH );
-      return(-1);
-   }
-   if( folder[len-1] == '/' ){ --len; } // remove trailing /
-   for(i=0; i<len; i++){ // check input - no '/'
-      if( folder[i] == '/' ){ break; }
-      if( folder[i]  < ' ' ){ break; } // space = 32
-      if( folder[i]  > '~' ){ break; } //     ~ = 127
-   }
-   if( i != len ){
-      fprintf(stderr,"invalid characters in folder:%s\n", folder );
-      return(-1);
-   }
-   return(len);
+	for(i=0; i<FOLDER_PATH_LENGTH; i++) {
+		if( folder[i] == '\0' ) { break; }
+	}
+	if( (len=i) >= FOLDER_PATH_LENGTH ) {
+		fprintf(stderr,"folder longer than %d\n", FOLDER_PATH_LENGTH );
+		return(-1);
+	}
+	if( folder[len-1] == '/' ) { --len; } // remove trailing /
+	for(i=0; i<len; i++) { // check input - no '/'
+		if( folder[i] == '/' ) { break; }
+		if( folder[i]  < ' ' ) { break; }// space = 32
+		if( folder[i]  > '~' ) { break; }//     ~ = 127
+	}
+	if( i != len ) {
+		fprintf(stderr,"invalid characters in folder:%s\n", folder );
+		return(-1);
+	}
+	return(len);
 }
-
