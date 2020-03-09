@@ -27,12 +27,9 @@ static std::string influxdb_port = "8086";
 static std::string influxdb_dbname = "titan";
 std::string influx_connection_string_mdpp = "http://" + influxdb_hostname + ":" + influxdb_port + "/?db=" + influxdb_dbname;
 auto influxdb_conn_mdpp = influxdb::InfluxDBFactory::Get(influx_connection_string_mdpp);
+//influxdb_conn_mdpp->enableBuffering(100);
 #endif
 
-//#include <TH1F.h>
-//#include <TH2F.h>
-//#include <TTree.h>
-//#include <TDirectory.h>
 
 #define NUM_ODB_CHAN     459 // size of msc table in odb
 #define MAX_SAMPLE_LEN  4096
@@ -51,7 +48,7 @@ auto influxdb_conn_mdpp = influxdb::InfluxDBFactory::Get(influx_connection_strin
 #define N_SUM 5
 #define RATE_COUNT_INTERVAL 1 // This is in seconds, controls how often the per channel rate data is updated
 
-
+int global_run_number = 0;
 static short waveform[MAX_SAMPLE_LEN];
 static int rate_data[MAX_CHAN];
 //static float          gains[MAX_CHAN];
@@ -62,7 +59,7 @@ static int num_chanhist;
 static short address_chan[MAX_ADDRESS];
 static int addr_count_mdpp[MAX_CHAN + 1];// = {0};  // this will be used to calculate rates per channel
 time_t last_update_mdpp = time(NULL);
-
+unsigned int mdpp_event_count = 0;
 
 static int debug; // only accessible through gdb
 //TH1I *hit_hist[N_HITPAT];
@@ -115,6 +112,8 @@ int hist_mdpp_init();
 //---------------------------------------------------------------------
 
 int mdpp16_bor(INT run_number) {
+  // JONR : Put code here eventually to tag the database with the run number
+  global_run_number = run_number;
 	return SUCCESS;
 }
 int mdpp16_eor(INT run_number) {
@@ -144,43 +143,15 @@ int mdpp16_init(void)
 		cm_msg(MINFO, "FE", "Failed to enable ana param hotlink", set_str);
 
 	}
-
-	//hist_init_roody();
 	hist_mdpp_init();
+  printf("Do we get here a lot for some reason?\n");
+  influxdb_conn_mdpp->batchOf(1000);
 	return SUCCESS;
 }
 
 int report_counts_mdpp(int interval)
 {
-
-  report_counts(interval, influxdb_conn_mdpp, "mdpp16", MAX_CHAN, addr_count_mdpp);
-/*	std::string mdpp_chan = "";
-  int rate_data_exists = 0;
-#ifdef USE_INFLUXDB
-	Point mypoint = Point{"mdpp16_rate"};
-#endif
-	for (int i = 0; i <= MAX_CHAN; i++) {
-		if ( addr_count_mdpp[i] == 0 ) { continue; }
-    rate_data_exists = 1;
-		mdpp_chan = "mdpp16_" + std::to_string(i);
-
-#ifdef USE_INFLUXDB
-  		mypoint.addField(mdpp_chan, addr_count_mdpp[i] / interval);
-  #endif
-
-	}
-#ifdef USE_INFLUXDB
-  try {
-    if(rate_data_exists == 1) {
-	     influxdb_conn_mdpp->write(std::move(mypoint));
-     }
-  }
-  catch (...)
-   {
-     std::cout << "A MDPP write exception occurred. Exception Nr. Interval : " << interval  << '\n';
-   }
-#endif
-  */
+  report_counts(interval, influxdb_conn_mdpp, "mdpp16", MAX_CHAN, addr_count_mdpp, mdpp_event_count);
 	memset(addr_count_mdpp, 0, sizeof(addr_count_mdpp) );
 	return (0);
 }
@@ -256,22 +227,6 @@ int mdpp16_event(EVENT_HEADER *pheader, void *pevent)
 		report_counts_mdpp(curr_time - last_update_mdpp);
 		last_update_mdpp = curr_time;
 	}
-	//printf("We got an MDPP16 event!\n");
-	// Added this chunk for the count rate vs time histogram. startTime is run, beginTime is interval
-	//  if ( startTime == 0 ) {
-	// startTime = beginTime = currentTime;
-	// } // equivalent to beginTime=currentTime; startTime=beginTime;
-	// if ( currentTime - startTime > ana_param.update_interval ) {
-	// for (i = 0; i < NUM_CHAN; i++) {
-	// If enough time elapsed, populate hRate at beginning of event with previous values
-	//JON FIXME hRate[i] -> SetBinContent((currentTime-beginTime)/ana_param.update_interval, rates[i]);
-	//   rates[i] = 0;
-
-	// }
-	//  startTime = curr_time;
-	// }
-
-	// bank_len defined here. bk_locate(event,name,pdata) finds "MDPP" in event and returns bank length
 	if ( (bank_len = bk_locate(pevent, "MDPP", &data) ) == 0 ) { return (0); }
 	//printf("Bank Length : %i\n", bank_len);
 	++evcount;
@@ -345,6 +300,8 @@ int mdpp16_event(EVENT_HEADER *pheader, void *pevent)
 			if (evadcdata <= ENERGY_BINS && chan < MAX_CHAN) {
 				//printf("Adding entry for energy hit %i on channel : %i\n", evadcdata, chan);
 				ph_hist_mdpp[chan]->Fill(ph_hist_mdpp[chan],  (int)evadcdata,     1);
+        mdpp_event_count = mdpp_event_count + 1;
+        write_pulse_height_event(influxdb_conn_mdpp, "mdpp16", 0, chan, flags, 0, evadcdata);
 			}
 		}
 //JON  hEnergy_vs_ts    [chan]-> Fill(evadcdata, ts/16000000);

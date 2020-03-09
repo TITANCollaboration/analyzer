@@ -321,7 +321,7 @@ int GetIDfromAddress(int addr)
 int report_counts_grif(int interval)
 {
 
-  report_counts(interval, influxdb_conn_grif, "grif16", MAX_CHAN, addr_count_grif);
+  report_counts(interval, influxdb_conn_grif, "grif16", MAX_CHAN, addr_count_grif, 0);
 /*	std::string grif_chan = "";
 
 #ifdef USE_INFLUXDB
