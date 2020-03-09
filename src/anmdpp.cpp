@@ -144,7 +144,6 @@ int mdpp16_init(void)
 
 	}
 	hist_mdpp_init();
-  printf("Do we get here a lot for some reason?\n");
   influxdb_conn_mdpp->batchOf(1000);
 	return SUCCESS;
 }
@@ -162,7 +161,7 @@ int hist_mdpp_init()
 		"HITPATTERN_Energy",   "HITPATTERN_Time",
 		"HITPATTERN_Waveform", "HITPATTERN_Pulse_Height", "HITPATTERN_Rate"
 	};
-	char sum_titles[N_SUM][32] = { "SUM_Singles_Low_gain_Energy", "SUM_Singles_High_gain_Energy", "SUM_Addback_Energy", "SUM_PACES_Energy", "SUM_LaBr3_Energy"};
+	char sum_titles[N_SUM][32] = { "SUM_Singles_Low_gain_Energy", "SUM_Singles_High_gain_Energy", "SUM_Addback_Energy" };
 	char hit_names[N_HITPAT][32] = {"e_hit", "t_hit", "w_hit", "q_hit", "r_hit"};
 	char sum_names[N_SUM][32] = {"el_sum", "eh_sum", "a_sum", "p_sum", "l_sum"};
 	char title[STRING_LEN], handle[STRING_LEN];
@@ -301,7 +300,7 @@ int mdpp16_event(EVENT_HEADER *pheader, void *pevent)
 				//printf("Adding entry for energy hit %i on channel : %i\n", evadcdata, chan);
 				ph_hist_mdpp[chan]->Fill(ph_hist_mdpp[chan],  (int)evadcdata,     1);
         mdpp_event_count = mdpp_event_count + 1;
-        write_pulse_height_event(influxdb_conn_mdpp, "mdpp16", 0, chan, flags, 0, evadcdata);
+        write_pulse_height_event(influxdb_conn_mdpp, global_run_number, "mdpp16", 0, chan, flags, 0, evadcdata);
 			}
 		}
 //JON  hEnergy_vs_ts    [chan]-> Fill(evadcdata, ts/16000000);

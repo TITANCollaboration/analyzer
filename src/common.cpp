@@ -2,15 +2,21 @@
 #include "InfluxDBFactory.h"
 #include "Transport.h"
 #include "Point.h"
+#include "TFile.h"
+#include "TTree.h"
+//#include "midas.h"
+//#include "rmidas.h"
 
+
+
+//ROOT Stuff
+//#include "TBranch.h"
 #include <iostream>
 
 using namespace influxdb;
 
-// JONR: The 0 value after flags and before data will be the timestamp... Just getting things going first
-int write_pulse_height_event(std::unique_ptr<InfluxDB> &influxdb_conn, std::string daq_prefix, int run_num, int daq_chan, int flags, int timestamp, int evadcdata) {
+int write_pulse_height_event_influxdb(std::unique_ptr<InfluxDB> &influxdb_conn, std::string daq_prefix, int run_num, int daq_chan, int flags, int timestamp, int evadcdata) {
   std::string point_name = daq_prefix + "_pulse_height";
-
   influxdb::Point mypoint = influxdb::Point{point_name};
   mypoint
     .addField("chan", daq_chan)
@@ -18,7 +24,22 @@ int write_pulse_height_event(std::unique_ptr<InfluxDB> &influxdb_conn, std::stri
     .addField("daq_timestamp", timestamp)
     .addField("Pulse_Height", evadcdata);
   influxdb_conn->write(std::move(mypoint));
-  return (0);
+  return(0);
+}
+int write_pulse_height_event_root(int run_num, int daq_chan, int flags, int timestamp, int evadcdata) {
+  // Write data out to a ROOT file
+//  std::string path_to_root_file = "/home/ebit/daq/analyzer_root_files/";
+//  std::string root_file_name = path_to_root_file + run_num + ".root";
+//  TFile *MyFile1 = new TFile("myfilename.root","NEW");
+  return(0);
+}
+
+// JONR: The 0 value after flags and before data will be the timestamp... Just getting things going first
+int write_pulse_height_event(std::unique_ptr<InfluxDB> &influxdb_conn, int run_number, std::string daq_prefix, int run_num, int daq_chan, int flags, int timestamp, int evadcdata) {
+  // write_pulse_height_event_influxdb(std::unique_ptr<InfluxDB> &influxdb_conn, int run_num, int daq_chan, int flags, int timestamp, int evadcdata);
+//  write_pulse_height_event_root(int run_num, int daq_chan, int flags, int timestamp, int evadcdata);
+  printf("Run Number : %i\n", run_number);
+  return(0);
 }
 
 int report_counts(int interval, std::unique_ptr<InfluxDB> &influxdb_conn, std::string daq_prefix, int MAX_CHANNELS, int addr_count[], unsigned int event_count)
