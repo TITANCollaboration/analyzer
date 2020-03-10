@@ -214,10 +214,10 @@ char sum_titles[N_SUM][32]={ "SUM_Singles_Low_gain_Energy","SUM_Singles_High_gai
 char hit_names[N_HITPAT][32]={"e_hit","t_hit","w_hit","q_hit","r_hit"};
 char sum_names[N_SUM][32]={"el_sum","eh_sum","a_sum","p_sum","l_sum"};
 
-TH1I *hit_hist[N_HITPAT];
-TH1I *sum_hist[N_SUM];
-TH1I *ph_hist[MAX_CHAN], *e_hist[MAX_CHAN], *cfd_hist[MAX_CHAN];
-TH1I *wave_hist[MAX_CHAN];
+TH1IHist *hit_hist[N_HITPAT];
+TH1IHist *sum_hist[N_SUM];
+TH1IHist *ph_hist[MAX_CHAN], *e_hist[MAX_CHAN], *cfd_hist[MAX_CHAN];
+TH1IHist *wave_hist[MAX_CHAN];
 
 int hist_init()
 {

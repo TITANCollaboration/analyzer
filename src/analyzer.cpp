@@ -6,15 +6,22 @@
 #include "midas.h"
 #include "web_server.h"
 
-
+#include "TH1.h"
+#include "TH1D.h"
+#include "TFile.h"
 
 extern ANA_MODULE griffin_module;
 extern ANA_MODULE mdpp16_module;
-int test_root_var;
-//TFile *root_file;
-//std::string path_to_root_file = "/home/ebit/daq/analyzer_root_files/";
 
-//std::string root_file_name;
+// Global variables to write root files
+TFile *root_file;
+TTree *myttree;
+Pulse_Event pevent;
+
+// Path to where we will write the root file
+std::string path_to_root_file = "/home/ebit/daq/analyzer_root_files/";
+
+std::string root_file_name;
 char *analyzer_name = "Analyzer"; /* The analyzer name (client name)   */
 INT analyzer_loop_period = 0; /* analyzer_loop call interval[ms](0:disable) */
 INT odb_size = DEFAULT_ODB_SIZE; /* default ODB size */
@@ -85,14 +92,19 @@ INT analyzer_exit(){
         pthread_join(web_thread, NULL);
         return CM_SUCCESS;
 }
-INT ana_begin_of_run(INT run_number, char *error){
-        test_root_var = 1;
-      //  root_file_name = path_to_root_file + std::to_string(run_number) + ".root";
-//        root_file = new TFile(root_file_name.c_str(),"NEW"); // Lets create our root file to write to
 
-        return CM_SUCCESS;
+INT ana_begin_of_run(INT run_number, char *error){
+
+  root_file_name = path_to_root_file + std::to_string(run_number) + ".root";
+  root_file = new TFile(root_file_name.c_str(),"NEW"); // Lets create our root file to write to
+  myttree = new TTree("EVENT_TREE","An example of ROOT tree with a few branches");
+  myttree->Branch("EVENT_BRANCH",&pevent,"chan/I:pulse_height/I:timestamp/I:flags/I");
+
+  return CM_SUCCESS;
 }
 INT ana_end_of_run(INT run_number, char *error){
+  root_file->Write();
+  root_file->Close();
   return CM_SUCCESS;
 }
 INT ana_pause_run(INT run_number, char *error){

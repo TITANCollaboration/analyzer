@@ -43,14 +43,14 @@ int close_folder() // work back from end to next slash
 
 int Zero_Histograms()
 {
-	int i;  TH1I *ptr;
+	int i;  TH1IHist *ptr;
 	for(i=0; i<next_histogram; i++) {
-		ptr = (TH1I *)histogram_list[i];
-		TH1I_Reset(ptr);
+		ptr = (TH1IHist *)histogram_list[i];
+		TH1IHist_Reset(ptr);
 	}
 }
 
-int TH1I_Reset(TH1I *thisptr)
+int TH1IHist_Reset(TH1IHist *thisptr)
 {
 	memset(thisptr->data, 0, thisptr->xbins*sizeof(float)); return(0);
 	thisptr->valid_bins    = thisptr->xbins;
@@ -59,7 +59,7 @@ int TH1I_Reset(TH1I *thisptr)
 	thisptr->entries       = 0;
 }
 
-int TH1I_Fill(TH1I *thisptr, int bin, int count)
+int TH1IHist_Fill(TH1IHist *thisptr, int bin, int count)
 {
 	(thisptr->entries)++;
 
@@ -69,55 +69,55 @@ int TH1I_Fill(TH1I *thisptr, int bin, int count)
 	return(0);
 }
 
-int TH1I_SetBinContent(TH1I *thisptr, int bin, int value)
+int TH1IHist_SetBinContent(TH1IHist *thisptr, int bin, int value)
 {
 	if( bin < 0 || bin >= thisptr->xbins ) { return(-1); }
 	(thisptr->data[bin])=value; return(0);
 }
 
-int TH1I_GetBinContent(TH1I *thisptr, int bin)
+int TH1IHist_GetBinContent(TH1IHist *thisptr, int bin)
 {
 	if( bin < 0 || bin >= thisptr->xbins ) { return(0); }
 	return( (thisptr->data[bin]) );
 }
 
-int TH1I_SetValidLen(TH1I *thisptr, int bins)
+int TH1IHist_SetValidLen(TH1IHist *thisptr, int bins)
 {
 	if( bins < 0 || bins >= thisptr->xbins ) { return(0); }
 	(thisptr->valid_bins)=bins; return(0);
 }
 
 /* if thisptr starts being slow - add names to hash table */
-TH1I *hist_querytitle(char *name)
+TH1IHist *hist_querytitle(char *name)
 {
-	TH1I *ptr;   int i;
+	TH1IHist *ptr;   int i;
 	for(i=0; i<next_histogram; i++) {
 		//printf("Histogram that exists in histogram.c : %s", histogram_list[i]);
-		ptr = (TH1I *)histogram_list[i];
+		ptr = (TH1IHist *)histogram_list[i];
 		if( strcmp(name, ptr->title) == 0 ) { return( ptr ); }
 	}
 	return( NULL );
 }
-TH1I *hist_queryhandle(char *name)
+TH1IHist *hist_queryhandle(char *name)
 {
-	TH1I *ptr;   int i;
+	TH1IHist *ptr;   int i;
 	for(i=0; i<next_histogram; i++) {
-		ptr = (TH1I *)histogram_list[i];
+		ptr = (TH1IHist *)histogram_list[i];
 		if( strcmp(name, ptr->handle) == 0 ) { return( ptr ); }
 	}
 	return( NULL );
 }
-//TH1I *hist_querynum(int num){}
+//TH1IHist *hist_querynum(int num){}
 
-TH1I *H1_BOOK(char *name, char *title, int nbins, int arg2, int arg3)
+TH1IHist *H1_BOOK(char *name, char *title, int nbins, int arg2, int arg3)
 {
-	int tlen, hlen; TH1I *result;
+	int tlen, hlen; TH1IHist *result;
 	if( next_histogram >= MAX_HISTOGRAMS ) {
 		fprintf(stderr,"H1_BOOK: max number of histograms:%d exceeded\n",
 		        MAX_HISTOGRAMS );
 		return(NULL);
 	}
-	if( (result = (TH1I *)malloc(sizeof(TH1I))) == NULL) {
+	if( (result = (TH1IHist *)malloc(sizeof(TH1IHist))) == NULL) {
 		fprintf(stderr,"H1_BOOK: structure malloc failed\n");
 		return(NULL);
 	}
@@ -137,11 +137,11 @@ TH1I *H1_BOOK(char *name, char *title, int nbins, int arg2, int arg3)
 	result->entries       = 0;
 	result->xbins         = nbins;
 	result->valid_bins    = nbins;
-	result->Reset         = &TH1I_Reset;
-	result->Fill          = &TH1I_Fill;
-	result->SetBinContent = &TH1I_SetBinContent;
-	result->GetBinContent = &TH1I_GetBinContent;
-	result->SetValidLen   = &TH1I_SetValidLen;
+	result->Reset         = &TH1IHist_Reset;
+	result->Fill          = &TH1IHist_Fill;
+	result->SetBinContent = &TH1IHist_SetBinContent;
+	result->GetBinContent = &TH1IHist_GetBinContent;
+	result->SetValidLen   = &TH1IHist_SetValidLen;
 	result->type          = FLOAT_1D;
 	histogram_list[next_histogram++] = (void *)result;
 	return(result);

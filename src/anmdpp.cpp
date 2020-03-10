@@ -13,12 +13,20 @@ using namespace std;
 #include "web_server.h"
 #include "experim.h"
 
+//Root Stuff
+#include "TH1.h"
+#include "TH1D.h"
+#include "TH1F.h"
+#include "TFile.h"
+
+#include "common.h"
+
+
 #ifdef USE_INFLUXDB
 #include "InfluxDBFactory.h"
 #include "Transport.h"
 #include "Point.h"
 
-#include "common.h"
 using namespace influxdb;
 //INFLUX DB SETTINGS
 //auto influxdb_conn_mdpp = 0;
@@ -48,7 +56,6 @@ auto influxdb_conn_mdpp = influxdb::InfluxDBFactory::Get(influx_connection_strin
 #define N_SUM 5
 #define RATE_COUNT_INTERVAL 1 // This is in seconds, controls how often the per channel rate data is updated
 
-int global_run_number = 0;
 static short waveform[MAX_SAMPLE_LEN];
 static int rate_data[MAX_CHAN];
 //static float          gains[MAX_CHAN];
@@ -62,7 +69,7 @@ time_t last_update_mdpp = time(NULL);
 unsigned int mdpp_event_count = 0;
 
 static int debug; // only accessible through gdb
-//TH1I *hit_hist[N_HITPAT];
+//TH1IHist *hit_hist[N_HITPAT];
 
 /*-- Module declaration --------------------------------------------*/
 int mdpp16_event(EVENT_HEADER *, void *);
@@ -96,24 +103,22 @@ ANA_MODULE mdpp16_module = {
 //static TH2F *hEnergy_vs_ts[NUM_CHAN];
 
 
-extern TH1I **hit_hist;
-extern TH1I **sum_hist;
-//extern TH1I *ph_hist;
-//extern TH1I **e_hist;
-//extern TH1I **cfd_hist;
-extern TH1I **wave_hist;
+extern TH1IHist **hit_hist;
+extern TH1IHist **sum_hist;
+//extern TH1IHist *ph_hist;
+//extern TH1IHist **e_hist;
+//extern TH1IHist **cfd_hist;
+extern TH1IHist **wave_hist;
 
-TH1I *ph_hist_mdpp[MAX_CHAN];
-TH1I *e_hist_mdpp[MAX_CHAN];
-TH1I *cfd_hist_mdpp[MAX_CHAN];
-
+TH1IHist *ph_hist_mdpp[MAX_CHAN];
+TH1IHist *e_hist_mdpp[MAX_CHAN];
+TH1IHist *cfd_hist_mdpp[MAX_CHAN];
 int hist_init_roody();
 int hist_mdpp_init();
 //---------------------------------------------------------------------
 
 int mdpp16_bor(INT run_number) {
   // JONR : Put code here eventually to tag the database with the run number
-  global_run_number = run_number;
 	return SUCCESS;
 }
 int mdpp16_eor(INT run_number) {
@@ -130,10 +135,8 @@ int mdpp16_init(void)
 	char set_str[80];
 	int size, status;
 	HNDLE hSet;
-  //  open_folder("mine");
-//  TH1I *old = (TH1I*)gDirectory->Get("evtno_histo");
-//  evtno_histo = new TH1I("evtno_histo","Event Number Histogram",1000,0,10000);
-	printf("Were init'ing the crap out of the MDPP16 stuff...\n");
+
+	printf("Were init'ing the crap out of the MDPP16...\n");
 	size = sizeof(MDPP16_ANALYSER_PARAMETERS);
 
 	sprintf(set_str, "/mdpp16_analyser/Parameters");
@@ -203,6 +206,8 @@ int hist_mdpp_init()
 
 int mdpp16_event(EVENT_HEADER *pheader, void *pevent)
 {
+  myttree->SetDirectory(root_file);
+
 	/* BeginTime needs to be global? startTime should be set to 0 at the beginning of each event? and then
 	   something something...  */
 	int i, bank_len, err = 0;
@@ -303,9 +308,14 @@ int mdpp16_event(EVENT_HEADER *pheader, void *pevent)
 				//printf("Adding entry for energy hit %i on channel : %i\n", evadcdata, chan);
 				ph_hist_mdpp[chan]->Fill(ph_hist_mdpp[chan],  (int)evadcdata,     1);
         mdpp_event_count = mdpp_event_count + 1;
-        write_pulse_height_event(influxdb_conn_mdpp, global_run_number, "mdpp16", 0, chan, flags, 0, evadcdata);
+        //write_pulse_height_event(influxdb_conn_mdpp, global_run_number, "mdpp16", 0, chan, flags, 0, evadcdata);
+
 			}
 		}
+    if (evadcdata <= ENERGY_BINS && chan < MAX_CHAN && ts > 0) {
+      write_pulse_height_event("mdpp16", chan, flags, ts, evadcdata);
+    }
+
 //JON  hEnergy_vs_ts    [chan]-> Fill(evadcdata, ts/16000000);
 		//JON hTDC             [chan]-> Fill(evtdcdata); // TDC value (event time after window opened)
 		//hCalEnergy1      [chan]->Fill((evadcdata-ana_param.peak1_channel)*(ana_param.peak2_energy-ana_param.peak1_energy)/(ana_param.peak2_channel - ana_param.peak1_channel )+ ana_param.peak1_energy);

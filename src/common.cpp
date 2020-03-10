@@ -24,21 +24,24 @@ int write_pulse_height_event_influxdb(std::unique_ptr<InfluxDB> &influxdb_conn, 
   influxdb_conn->write(std::move(mypoint));
   return(0);
 }
-int write_pulse_height_event_root(int run_num, int daq_chan, int flags, int timestamp, int evadcdata) {
-  printf("My test var is .... %i", test_root_var);
-  // Write data out to a ROOT file
-//  std::string path_to_root_file = "/home/ebit/daq/analyzer_root_files/";
-//  std::string root_file_name = path_to_root_file + run_num + ".root";
-//  TFile *MyFile1 = new TFile("myfilename.root","NEW");
+
+int write_pulse_height_event_root(int daq_chan, int flags, int timestamp, int evadcdata) {
+  myttree->SetDirectory(root_file);
+
+  pevent.chan = daq_chan;
+  pevent.pulse_height = evadcdata;
+  pevent.flags = flags;
+  pevent.timestamp = timestamp;
+
+  myttree->Fill();
+
   return(0);
 }
 
-// JONR: The 0 value after flags and before data will be the timestamp... Just getting things going first
-int write_pulse_height_event(std::unique_ptr<InfluxDB> &influxdb_conn, int run_number, std::string daq_prefix, int run_num, int daq_chan, int flags, int timestamp, int evadcdata) {
+int write_pulse_height_event(std::string daq_prefix, int daq_chan, int flags, int timestamp, int evadcdata) {
   // write_pulse_height_event_influxdb(std::unique_ptr<InfluxDB> &influxdb_conn, int run_num, int daq_chan, int flags, int timestamp, int evadcdata);
-//  write_pulse_height_event_root(int run_num, int daq_chan, int flags, int timestamp, int evadcdata);
-//  printf("Run Number : %i\n", run_number);
-  printf("My test var is .... %i", test_root_var);
+  // JONR: Must properly convert daq_preffix & daq_chan to just a channel
+  write_pulse_height_event_root(daq_chan, flags, timestamp, evadcdata);
 
   return(0);
 }

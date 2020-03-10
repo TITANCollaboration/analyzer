@@ -176,7 +176,7 @@ int send_spectrum_list(int fd)
 int send_spectrum(int num, int fd)
 {
 	int i, j;  char temp[256];
-	TH1I *hist;
+	TH1IHist *hist;
 	//printf("Send Spectrium : Num : %i, FD : %i\n", num, fd);
 	put_line(fd, HIST_HDR, strlen(HIST_HDR) );
 	for (j = 0; j < num; j++) {

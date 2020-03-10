@@ -5,18 +5,21 @@
 #include "Transport.h"
 #include "Point.h"
 #include <iostream>
-//#include "TH1.h"
-//#include "TH1F.h"
+
 #include "TFile.h"
-//#include <TH1F.h>
+#include "TTree.h"
 using namespace influxdb;
 
-extern int test_root_var;
-//extern TFile *root_file;
+typedef struct {Int_t chan, pulse_height, timestamp, flags;} Pulse_Event;
 
-extern int report_counts(int interval, std::unique_ptr<InfluxDB> &influxdb_conn, std::string daq_prefix, int MAX_CHANNELS, int addr_count[], unsigned int event_count);
-int write_pulse_height_event(std::unique_ptr<InfluxDB> &influxdb_conn, int run_number, std::string daq_prefix, int run_num, int daq_chan, int flags, int timestamp, int evadcdata);
-int write_pulse_height_event_influxdb(std::unique_ptr<InfluxDB> &influxdb_conn, std::string daq_prefix, int run_num, int daq_chan, int flags, int timestamp, int evadcdata);
-int write_pulse_height_event_root(int run_num, int daq_chan, int flags, int timestamp, int evadcdata);
+extern TFile *root_file;
+extern TTree *myttree;
+extern Pulse_Event pevent;
+
+int report_counts(int interval, std::unique_ptr<InfluxDB> &influxdb_conn, std::string daq_prefix, int MAX_CHANNELS, int addr_count[], unsigned int event_count);
+// int write_pulse_height_event(std::unique_ptr<InfluxDB> &influxdb_conn, std::string daq_prefix, int run_num, int daq_chan, int flags, int timestamp, int evadcdata);
+int write_pulse_height_event(std::string daq_prefix, int daq_chan, int flags, int timestamp, int evadcdata);
+int write_pulse_height_event_influxdb(std::unique_ptr<InfluxDB> &influxdb_conn, std::string daq_prefix, int daq_chan, int flags, int timestamp, int evadcdata);
+int write_pulse_height_event_root(int daq_chan, int flags, int timestamp, int evadcdata);
 
 #endif
