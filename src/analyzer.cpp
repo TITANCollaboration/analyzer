@@ -2,15 +2,19 @@
 #include <string.h>
 #include <time.h>
 #include <pthread.h>
-
+#include "common.h"
 #include "midas.h"
 #include "web_server.h"
 
 
+
 extern ANA_MODULE griffin_module;
 extern ANA_MODULE mdpp16_module;
+int test_root_var;
+//TFile *root_file;
+//std::string path_to_root_file = "/home/ebit/daq/analyzer_root_files/";
 
-
+//std::string root_file_name;
 char *analyzer_name = "Analyzer"; /* The analyzer name (client name)   */
 INT analyzer_loop_period = 0; /* analyzer_loop call interval[ms](0:disable) */
 INT odb_size = DEFAULT_ODB_SIZE; /* default ODB size */
@@ -82,10 +86,14 @@ INT analyzer_exit(){
         return CM_SUCCESS;
 }
 INT ana_begin_of_run(INT run_number, char *error){
+        test_root_var = 1;
+      //  root_file_name = path_to_root_file + std::to_string(run_number) + ".root";
+//        root_file = new TFile(root_file_name.c_str(),"NEW"); // Lets create our root file to write to
+
         return CM_SUCCESS;
 }
 INT ana_end_of_run(INT run_number, char *error){
-        return CM_SUCCESS;
+  return CM_SUCCESS;
 }
 INT ana_pause_run(INT run_number, char *error){
         return CM_SUCCESS;

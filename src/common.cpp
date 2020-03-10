@@ -1,9 +1,7 @@
 
-#include "InfluxDBFactory.h"
-#include "Transport.h"
-#include "Point.h"
 #include "TFile.h"
 #include "TTree.h"
+#include "common.h"
 //#include "midas.h"
 //#include "rmidas.h"
 
@@ -13,7 +11,7 @@
 //#include "TBranch.h"
 #include <iostream>
 
-using namespace influxdb;
+//using namespace influxdb;
 
 int write_pulse_height_event_influxdb(std::unique_ptr<InfluxDB> &influxdb_conn, std::string daq_prefix, int run_num, int daq_chan, int flags, int timestamp, int evadcdata) {
   std::string point_name = daq_prefix + "_pulse_height";
@@ -27,6 +25,7 @@ int write_pulse_height_event_influxdb(std::unique_ptr<InfluxDB> &influxdb_conn, 
   return(0);
 }
 int write_pulse_height_event_root(int run_num, int daq_chan, int flags, int timestamp, int evadcdata) {
+  printf("My test var is .... %i", test_root_var);
   // Write data out to a ROOT file
 //  std::string path_to_root_file = "/home/ebit/daq/analyzer_root_files/";
 //  std::string root_file_name = path_to_root_file + run_num + ".root";
@@ -38,7 +37,9 @@ int write_pulse_height_event_root(int run_num, int daq_chan, int flags, int time
 int write_pulse_height_event(std::unique_ptr<InfluxDB> &influxdb_conn, int run_number, std::string daq_prefix, int run_num, int daq_chan, int flags, int timestamp, int evadcdata) {
   // write_pulse_height_event_influxdb(std::unique_ptr<InfluxDB> &influxdb_conn, int run_num, int daq_chan, int flags, int timestamp, int evadcdata);
 //  write_pulse_height_event_root(int run_num, int daq_chan, int flags, int timestamp, int evadcdata);
-  printf("Run Number : %i\n", run_number);
+//  printf("Run Number : %i\n", run_number);
+  printf("My test var is .... %i", test_root_var);
+
   return(0);
 }
 

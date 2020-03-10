@@ -130,6 +130,9 @@ int mdpp16_init(void)
 	char set_str[80];
 	int size, status;
 	HNDLE hSet;
+  //  open_folder("mine");
+//  TH1I *old = (TH1I*)gDirectory->Get("evtno_histo");
+//  evtno_histo = new TH1I("evtno_histo","Event Number Histogram",1000,0,10000);
 	printf("Were init'ing the crap out of the MDPP16 stuff...\n");
 	size = sizeof(MDPP16_ANALYSER_PARAMETERS);
 

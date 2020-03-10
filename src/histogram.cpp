@@ -112,7 +112,6 @@ TH1I *hist_queryhandle(char *name)
 TH1I *H1_BOOK(char *name, char *title, int nbins, int arg2, int arg3)
 {
 	int tlen, hlen; TH1I *result;
-
 	if( next_histogram >= MAX_HISTOGRAMS ) {
 		fprintf(stderr,"H1_BOOK: max number of histograms:%d exceeded\n",
 		        MAX_HISTOGRAMS );
