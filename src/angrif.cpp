@@ -548,11 +548,12 @@ int process_decoded_fragment(Grif_event *ptr)
 	e_hist[chan]->Fill(e_hist[chan],   (int)ecal,       1);
 	hit_hist[0]->Fill(hit_hist[0],    chan,            1);
 	if(chan<64) {sum_hist[0]->Fill(sum_hist[0],    (int)ecal,       1);}    //Quick hack for only LO gain channels
-	if(chan>63 && chan<128) {sum_hist[1]->Fill(sum_hist[1],    (int)ecal,       1);}    //Quick hack for only HI gain channels
-	if(chan>99 && chan<106) {sum_hist[3]->Fill(sum_hist[3],    (int)ecal,       1);}    //Quick hack for only PACES channels
-	if(chan>91 && chan<100) {sum_hist[4]->Fill(sum_hist[4],    (int)ecal,       1);}    //Quick hack for only LaBr3 channels
+//	if(chan>63 && chan<128) {sum_hist[1]->Fill(sum_hist[1],    (int)ecal,       1);}    //Quick hack for only HI gain channels
+//	if(chan>99 && chan<106) {sum_hist[3]->Fill(sum_hist[3],    (int)ecal,       1);}    //Quick hack for only PACES channels
+//	if(chan>91 && chan<100) {sum_hist[4]->Fill(sum_hist[4],    (int)ecal,       1);}    //Quick hack for only LaBr3 channels
 	cfd_hist[chan]->Fill(cfd_hist[chan], ptr->cfd/256,    1);
 	hit_hist[1]->Fill(hit_hist[1],    chan,            1);
+  write_pulse_height_event("grif16", chan, ptr->pileup, ptr->timestamp, (int)energy);
 
 
 	if( (len = ptr->waveform_length) != 0 ) {

@@ -39,9 +39,13 @@ int write_pulse_height_event_root(int daq_chan, int flags, int timestamp, int ev
 }
 
 int write_pulse_height_event(std::string daq_prefix, int daq_chan, int flags, int timestamp, int evadcdata) {
+  int chan;
   // write_pulse_height_event_influxdb(std::unique_ptr<InfluxDB> &influxdb_conn, int run_num, int daq_chan, int flags, int timestamp, int evadcdata);
   // JONR: Must properly convert daq_preffix & daq_chan to just a channel
-  write_pulse_height_event_root(daq_chan, flags, timestamp, evadcdata);
+  if(daq_prefix == "mdpp16") {
+    chan = daq_chan + 100;
+  }
+  write_pulse_height_event_root(chan, flags, timestamp, evadcdata);
 
   return(0);
 }
