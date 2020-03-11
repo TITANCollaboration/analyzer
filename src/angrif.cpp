@@ -15,22 +15,7 @@
 #include "histogram.h"
 #include "web_server.h"
 
-#ifdef USE_INFLUXDB
-#include "InfluxDBFactory.h"
-#include "Transport.h"
-#include "Point.h"
 #include "common.h"
-
-using namespace influxdb;
-//INFLUX DB SETTINGS
-//auto influxdb_conn = 0;
-static std::string influxdb_hostname = "titan05.triumf.ca";
-static std::string influxdb_port = "8086";
-static std::string influxdb_dbname = "titan";
-std::string influx_connection_string = "http://" + influxdb_hostname + ":" + influxdb_port + "/?db=" + influxdb_dbname;
-auto influxdb_conn_grif = influxdb::InfluxDBFactory::Get(influx_connection_string);
-#endif
-
 
 #define TRUE 1
 #define FALSE 0
@@ -114,11 +99,6 @@ int unpack_griffin_bank(unsigned *buf, int len);
 int griffin_init()
 {
 	int i;
-	//  std::string influx_connection_string = "http://" + influxdb_hostname + ":8086/?db=test";
-#ifdef USE_INFLUXDB
-	std::cout << "My connection string : "<<  influx_connection_string << "\n";
-	// influxdb_conn = influxdb::InfluxDBFactory::Get("http://localhost:8086/?db=test");
-#endif
 	read_odb_gains();     // Print the loaded gains and offsets
 	fprintf(stdout,"\nRead Gain/Offset values from ODB\nIndex\tGain\tOffset\n");
 	for(i=0; i<NUM_ODB_CHAN; i++) {
@@ -320,41 +300,7 @@ int GetIDfromAddress(int addr)
 
 int report_counts_grif(int interval)
 {
-
-  report_counts(interval, influxdb_conn_grif, "grif16", MAX_CHAN, addr_count_grif, 0);
-/*	std::string grif_chan = "";
-
-#ifdef USE_INFLUXDB
-	Point mypoint = Point{"grif16_rate"};
-#endif
-
-	for (int i = 0; i <= MAX_CHAN; i++) {
-		if ( addr_count[i] == 0 ) { continue; }
-		// fprintf(stdout, "   Chan:0x%04x [%5d] - %4d/s\n", i, i, addr_count[i] / interval );
-
-		grif_chan = "grif_" + std::to_string(i);
-
-#ifdef USE_INFLUXDB
-    try {
-		mypoint.addField(grif_chan, addr_count[i] / interval);
-  }
-catch (int e)
-{
-  std::cout << "A point exception occurred. Exception Nr. " << e << '\n';
-  }
-#endif
-
-	}
-#ifdef USE_INFLUXDB
-try {
-  influxdb_conn->write(std::move(mypoint));
-}
-catch (...)
-{
-std::cout << "A GRIF write exception occurred. Exception Nr. " << '\n';
-}
-#endif
-  */
+  report_counts(interval, "grif16", MAX_CHAN, addr_count_grif, 0);
 	memset(addr_count_grif, 0, sizeof(addr_count_grif) );
 	return (0);
 }

@@ -27,14 +27,7 @@ using namespace std;
 #include "Transport.h"
 #include "Point.h"
 
-using namespace influxdb;
-//INFLUX DB SETTINGS
-//auto influxdb_conn_mdpp = 0;
-static std::string influxdb_hostname = "titan05.triumf.ca";
-static std::string influxdb_port = "8086";
-static std::string influxdb_dbname = "titan";
-std::string influx_connection_string_mdpp = "http://" + influxdb_hostname + ":" + influxdb_port + "/?db=" + influxdb_dbname;
-auto influxdb_conn_mdpp = influxdb::InfluxDBFactory::Get(influx_connection_string_mdpp);
+
 //influxdb_conn_mdpp->enableBuffering(100);
 #endif
 
@@ -150,13 +143,13 @@ int mdpp16_init(void)
 
 	}
 	hist_mdpp_init();
-  influxdb_conn_mdpp->batchOf(1000);
+//  influxdb_conn_mdpp->batchOf(1000);
 	return SUCCESS;
 }
 
 int report_counts_mdpp(int interval)
 {
-  report_counts(interval, influxdb_conn_mdpp, "mdpp16", MAX_CHAN, addr_count_mdpp, mdpp_event_count);
+  report_counts(interval, "mdpp16", MAX_CHAN, addr_count_mdpp, mdpp_event_count);
 	memset(addr_count_mdpp, 0, sizeof(addr_count_mdpp) );
 	return (0);
 }

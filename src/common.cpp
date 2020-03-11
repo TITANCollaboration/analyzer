@@ -1,30 +1,25 @@
 #include <iostream>
 
 //ROOT Stuff
-#include "TFile.h"
-#include "TTree.h"
 #include "common.h"
 
-int write_pulse_height_event_influxdb(std::unique_ptr<InfluxDB> &influxdb_conn, std::string daq_prefix, int run_num, int daq_chan, int flags, int timestamp, int evadcdata) {
-  std::string point_name = daq_prefix + "_pulse_height";
+#ifdef USE_INFLUXDB
+
+int write_pulse_height_event_influxdb(int chan, int flags, int timestamp, int evadcdata) {
+  std::string point_name = "pulse_height";
   influxdb::Point mypoint = influxdb::Point{point_name};
   mypoint
-    .addField("chan", daq_chan)
+    .addField("chan", chan)
     .addField("flags", flags)
     .addField("daq_timestamp", timestamp)
     .addField("Pulse_Height", evadcdata);
   influxdb_conn->write(std::move(mypoint));
   return(0);
 }
+#endif
 
 int write_pulse_height_event_root(int chan, int flags, int timestamp, int evadcdata) {
-  //myttree->SetDirectory(root_file);
   myntuple->SetDirectory(root_file);
-/*  pevent.chan = daq_chan;
-  pevent.pulse_height = evadcdata;
-  pevent.flags = flags;
-  pevent.timestamp = timestamp;*/
-
   myntuple->Fill(chan, evadcdata, timestamp, flags);
 
   return(0);
@@ -32,17 +27,19 @@ int write_pulse_height_event_root(int chan, int flags, int timestamp, int evadcd
 
 int write_pulse_height_event(std::string daq_prefix, int daq_chan, int flags, int timestamp, int evadcdata) {
   int chan;
-  // write_pulse_height_event_influxdb(std::unique_ptr<InfluxDB> &influxdb_conn, int run_num, int daq_chan, int flags, int timestamp, int evadcdata);
+  // write_pulse_height_event_influxdb(int daq_chan, int flags, int timestamp, int evadcdata);
   // JONR: Must properly convert daq_preffix & daq_chan to just a channel
   if(daq_prefix == "mdpp16") {
     chan = daq_chan + 100;
   }
+  // Probably want to add some code to have it selectable if you want to use influx for mdpp16 + grif16 data or not
+  //write_pulse_height_event_influxdb(chan, flags, timestamp, evadcdata);
   write_pulse_height_event_root(chan, flags, timestamp, evadcdata);
 
   return(0);
 }
 
-int report_counts(int interval, std::unique_ptr<InfluxDB> &influxdb_conn, std::string daq_prefix, int MAX_CHANNELS, int addr_count[], unsigned int event_count)
+int report_counts(int interval, std::string daq_prefix, int MAX_CHANNELS, int addr_count[], unsigned int event_count)
 {
 	std::string daq_chan = "";
   int rate_data_exists = 0;

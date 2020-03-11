@@ -17,7 +17,16 @@ extern ANA_MODULE mdpp16_module;
 TFile *root_file;
 TTree *myttree;
 TNtuple *myntuple;
-Pulse_Event pevent;
+
+#ifdef USE_INFLUXDB
+//Influx DB stuff
+static std::string influxdb_hostname = "titan05.triumf.ca";
+static std::string influxdb_port = "8086";
+static std::string influxdb_dbname = "titan";
+std::string influx_connection_string = "http://" + influxdb_hostname + ":" + influxdb_port + "/?db=" + influxdb_dbname;
+std::unique_ptr<InfluxDB> influxdb_conn = influxdb::InfluxDBFactory::Get(influx_connection_string);
+#endif
+
 
 // Path to where we will write the root file
 std::string path_to_root_file = "/home/ebit/daq/analyzer_root_files/";
@@ -100,6 +109,9 @@ INT ana_begin_of_run(INT run_number, char *error){
   root_file = new TFile(root_file_name.c_str(),"NEW"); // Lets create our root file to write to
   myntuple = new TNtuple("EVENT_NTUPLE","NTuple of events", "chan:pulse_height:timestamp:flags");
 
+  #ifdef USE_INFLUXDB
+  influxdb_conn->batchOf(1000);
+  #endif
   return CM_SUCCESS;
 }
 INT ana_end_of_run(INT run_number, char *error){
