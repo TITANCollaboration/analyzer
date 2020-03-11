@@ -1,17 +1,9 @@
+#include <iostream>
 
+//ROOT Stuff
 #include "TFile.h"
 #include "TTree.h"
 #include "common.h"
-//#include "midas.h"
-//#include "rmidas.h"
-
-
-
-//ROOT Stuff
-//#include "TBranch.h"
-#include <iostream>
-
-//using namespace influxdb;
 
 int write_pulse_height_event_influxdb(std::unique_ptr<InfluxDB> &influxdb_conn, std::string daq_prefix, int run_num, int daq_chan, int flags, int timestamp, int evadcdata) {
   std::string point_name = daq_prefix + "_pulse_height";
@@ -25,15 +17,15 @@ int write_pulse_height_event_influxdb(std::unique_ptr<InfluxDB> &influxdb_conn, 
   return(0);
 }
 
-int write_pulse_height_event_root(int daq_chan, int flags, int timestamp, int evadcdata) {
-  myttree->SetDirectory(root_file);
-
-  pevent.chan = daq_chan;
+int write_pulse_height_event_root(int chan, int flags, int timestamp, int evadcdata) {
+  //myttree->SetDirectory(root_file);
+  myntuple->SetDirectory(root_file);
+/*  pevent.chan = daq_chan;
   pevent.pulse_height = evadcdata;
   pevent.flags = flags;
-  pevent.timestamp = timestamp;
+  pevent.timestamp = timestamp;*/
 
-  myttree->Fill();
+  myntuple->Fill(chan, evadcdata, timestamp, flags);
 
   return(0);
 }

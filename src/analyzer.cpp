@@ -16,6 +16,7 @@ extern ANA_MODULE mdpp16_module;
 // Global variables to write root files
 TFile *root_file;
 TTree *myttree;
+TNtuple *myntuple;
 Pulse_Event pevent;
 
 // Path to where we will write the root file
@@ -97,8 +98,7 @@ INT ana_begin_of_run(INT run_number, char *error){
 
   root_file_name = path_to_root_file + std::to_string(run_number) + ".root";
   root_file = new TFile(root_file_name.c_str(),"NEW"); // Lets create our root file to write to
-  myttree = new TTree("EVENT_TREE","An example of ROOT tree with a few branches");
-  myttree->Branch("EVENT_BRANCH",&pevent,"chan/I:pulse_height/I:timestamp/I:flags/I");
+  myntuple = new TNtuple("EVENT_NTUPLE","NTuple of events", "chan:pulse_height:timestamp:flags");
 
   return CM_SUCCESS;
 }

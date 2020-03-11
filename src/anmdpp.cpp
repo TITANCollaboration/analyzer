@@ -206,7 +206,6 @@ int hist_mdpp_init()
 
 int mdpp16_event(EVENT_HEADER *pheader, void *pevent)
 {
-  myttree->SetDirectory(root_file);
 
 	/* BeginTime needs to be global? startTime should be set to 0 at the beginning of each event? and then
 	   something something...  */
