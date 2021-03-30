@@ -325,7 +325,9 @@ int decode_griffin_event( unsigned int *evntbuf, int evntbuflen)
 		return(-1);
 	}
 	while( evntbuf < evntbufend ) {
-		type = *evntbuf >> 28; val32 = *(evntbuf++); value = val32 & 0xffffffff;
+		type = *evntbuf >> 28;
+    val32 = *(evntbuf++);
+    value = val32 & 0xffffffff;
 		switch( type ) {
 		case 0x8: ++event_count;                         /*  Event header */
 			if( evntbuf != evstrt+1 ) {
@@ -370,9 +372,11 @@ int decode_griffin_event( unsigned int *evntbuf, int evntbuflen)
 		 */
 		case 0xd: ptr->net_id = val32;            /* network packet counter */
 			// next 2 words are [mstpat/ppg mstid] in filtered data
-			if( ( *(evntbuf) >> 31 ) == 0 ) { val32 = *(evntbuf++);
-				                              ptr->wf_present = (val32 & 0x8000) >> 15;
-				                              ptr->pileup     = (val32 & 0x001F);}
+			if( ( *(evntbuf) >> 31 ) == 0 ) {
+        val32 = *(evntbuf++);
+				ptr->wf_present = (val32 & 0x8000) >> 15;
+				ptr->pileup     = (val32 & 0x001F);
+      }
 			if( ( *(evntbuf) >> 31 ) == 0 ) { ptr->master_id   = *(evntbuf++); }
 			break;
 		case 0xe:                                           /* Event Trailer */
@@ -396,7 +400,8 @@ int decode_griffin_event( unsigned int *evntbuf, int evntbuflen)
 				if( ++qtcount == 1 ) {                     /* Energy */
 					ptr->energy  = (ptr->dtype==6) ? val32 : val32 & 0x01ffffff;
 					ptr->e_bad   = (value >> 25) & 0x1;
-					ptr->integ |= ((val32 & 0x7c000000) >> 17); ptr->nhit = 1;
+					ptr->integ |= ((val32 & 0x7c000000) >> 17);
+          ptr->nhit = 1;
 				} else if( qtcount == 2 ) {                 /* CFD Time */
 					ptr->cfd     = (ptr->dtype==6) ? val32 : val32 & 0x003fffff;
 					ptr->integ |= ((val32 & 0x7FC00000) >> 22);
