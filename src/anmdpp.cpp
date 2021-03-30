@@ -275,7 +275,7 @@ int mdpp16_event(EVENT_HEADER *pheader, void *pevent)
 
 			// hHitPat->Fill( chan );
 			else if ( trigchan < MAX_CHAN ) { // ADC value caught
-				chan      = (data[i] >> MAX_CHAN) & 0x1F;
+				chan      = (data[i] >> 16) & 0x1F;
 				//printf("Channel : %i\n", chan);
 				evadcdata = (data[i] >> 0 ) & 0xFFFF;
 				++addr_count_mdpp[chan];

@@ -9,7 +9,7 @@
 #include "TH1.h"
 #include "TH1D.h"
 #include "TFile.h"
-
+#undef USE_INFLUXDB
 extern ANA_MODULE griffin_module;
 extern ANA_MODULE mdpp16_module;
 

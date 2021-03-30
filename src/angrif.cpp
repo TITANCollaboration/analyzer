@@ -79,7 +79,7 @@ static short waveform[MAX_SAMPLE_LEN];
 //static float        offsets[MAX_CHAN];
 static char chan_name[MAX_CHAN][MIDAS_STRLEN];
 static short chan_address[MAX_CHAN];
-static int num_chanhist;
+static int num_chanhist = 16; //MAX_CHAN;
 static short address_chan[MAX_ADDRESS];
 
 extern HNDLE hDB; // Odb Handle
@@ -481,8 +481,8 @@ int process_decoded_fragment(Grif_event *ptr)
 	chan = ptr->chan;
 	if( chan == -1 ) { return(0); }     // msg printed above for these
 	if( chan >= num_chanhist ) {
-		fprintf(stderr,"process_event: ignored event in chan:%d [0x%04x]\n",
-		        chan, ptr->address );
+		fprintf(stderr,"process_event: ignored event in chan:%d chanhist:%d[0x%04x]\n",
+		        chan, num_chanhist, ptr->address );
 		return(0);
 	}
 	energy = ( ptr->integ == 0 ) ? 0 : ptr->energy/ptr->integ;

@@ -2,7 +2,7 @@
 
 //ROOT Stuff
 #include "common.h"
-
+#undef USE_INFLUXDB
 #ifdef USE_INFLUXDB
 
 int write_pulse_height_event_influxdb(int chan, int flags, int timestamp, int evadcdata) {
