@@ -63,7 +63,7 @@ typedef struct griffin_fragment_struct {
 	int energy3;   int e3_bad;      int integ3;   int cc_short;
 	int energy4;   int e4_bad;      int integ4;   int nhit;
 	int trig_req;   int trig_acc;    int pileup;
-	long timestamp;   int deadtime;
+	unsigned long long timestamp;   int deadtime;
 	int master_id;   int master_pattern;
 	int net_id;   int trigger_num;
 	int wf_present;   short waveform_length;

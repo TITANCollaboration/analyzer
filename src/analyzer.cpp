@@ -6,30 +6,30 @@
 #include "midas.h"
 #include "web_server.h"
 
-#include "TH1.h"
+/*#include "TH1.h"
 #include "TH1D.h"
-#include "TFile.h"
+#include "TFile.h"*/
 #undef USE_INFLUXDB
 extern ANA_MODULE griffin_module;
 extern ANA_MODULE mdpp16_module;
 
 // Global variables to write root files
-TFile *root_file;
-TTree *myttree;
-TNtuple *myntuple;
+//TFile *root_file;
+//TTree *myttree;
+//TNtuple *myntuple;
 
 #ifdef USE_INFLUXDB
 //Influx DB stuff
-static std::string influxdb_hostname = "titan05.triumf.ca";
-static std::string influxdb_port = "8086";
-static std::string influxdb_dbname = "titan";
-std::string influx_connection_string = "http://" + influxdb_hostname + ":" + influxdb_port + "/?db=" + influxdb_dbname;
-std::unique_ptr<InfluxDB> influxdb_conn = influxdb::InfluxDBFactory::Get(influx_connection_string);
+//static std::string influxdb_hostname = "titan05.triumf.ca";
+//static std::string influxdb_port = "8086";
+//static std::string influxdb_dbname = "titan";
+//std::string influx_connection_string = "http://" + influxdb_hostname + ":" + influxdb_port + "/?db=" + influxdb_dbname;
+//std::unique_ptr<InfluxDB> influxdb_conn = influxdb::InfluxDBFactory::Get(influx_connection_string);
 #endif
 
 
 // Path to where we will write the root file
-std::string path_to_root_file = "/home/ebit/daq/analyzer_root_files/";
+//std::string path_to_root_file = "/home/ebit/daq/analyzer_root_files/";
 
 std::string root_file_name;
 char *analyzer_name = "Analyzer"; /* The analyzer name (client name)   */
@@ -90,6 +90,7 @@ volatile int shutdown_webserver;
 static pthread_t web_thread;
 INT analyzer_init(){
         // Create new thread which launches the Web server
+
         int a1=1;
         pthread_create(&web_thread, NULL,(void* (*)(void*))web_server_main, &a1);
 
@@ -104,19 +105,19 @@ INT analyzer_exit(){
 }
 
 INT ana_begin_of_run(INT run_number, char *error){
-
-  root_file_name = path_to_root_file + std::to_string(run_number) + ".root";
-  root_file = new TFile(root_file_name.c_str(),"NEW"); // Lets create our root file to write to
-  myntuple = new TNtuple("EVENT_NTUPLE","NTuple of events", "chan:pulse_height:timestamp:flags");
+  printf("Starting Run: %i", run_number);
+  //root_file_name = path_to_root_file + std::to_string(run_number) + ".root";
+  //root_file = new TFile(root_file_name.c_str(),"NEW"); // Lets create our root file to write to
+  //myntuple = new TNtuple("EVENT_NTUPLE","NTuple of events", "chan:pulse_height:timestamp:flags");
 
   #ifdef USE_INFLUXDB
-  influxdb_conn->batchOf(1000);
+//  influxdb_conn->batchOf(1000);
   #endif
   return CM_SUCCESS;
 }
 INT ana_end_of_run(INT run_number, char *error){
-  root_file->Write();
-  root_file->Close();
+  //root_file->Write();
+  //root_file->Close();
   return CM_SUCCESS;
 }
 INT ana_pause_run(INT run_number, char *error){

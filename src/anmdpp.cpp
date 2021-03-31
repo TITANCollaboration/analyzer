@@ -14,18 +14,19 @@ using namespace std;
 #include "experim.h"
 
 //Root Stuff
+/*
 #include "TH1.h"
 #include "TH1D.h"
 #include "TH1F.h"
 #include "TFile.h"
-
+*/
 #include "common.h"
 
 
 #ifdef USE_INFLUXDB
-#include "InfluxDBFactory.h"
-#include "Transport.h"
-#include "Point.h"
+//#include "InfluxDBFactory.h"
+//#include "Transport.h"
+//#include "Point.h"
 
 
 //influxdb_conn_mdpp->enableBuffering(100);
