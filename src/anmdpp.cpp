@@ -32,10 +32,11 @@ using namespace std;
 //influxdb_conn_mdpp->enableBuffering(100);
 #endif
 
+#define INTEGRATION_LENGTH  8
 
 #define NUM_ODB_CHAN     459 // size of msc table in odb
 #define MAX_SAMPLE_LEN  4096
-#define ENERGY_BINS    65536 /* 65536 131072 262144 */
+#define ENERGY_BINS    8192 /* 65536 131072 262144 */
 #define NUM_CLOVER        16
 //#define MAX_CHAN        1024
 #define MAX_CHAN        16
@@ -306,7 +307,7 @@ int mdpp16_event(EVENT_HEADER *pheader, void *pevent)
 			}
 		}
     if (evadcdata <= ENERGY_BINS && chan < MAX_CHAN && ts > 0) {
-      write_pulse_height_event("mdpp16", chan, flags, ts, evadcdata);
+      write_pulse_height_event("mdpp16", chan, flags, ts, evadcdata/INTEGRATION_LENGTH);
     }
 
 //JON  hEnergy_vs_ts    [chan]-> Fill(evadcdata, ts/16000000);

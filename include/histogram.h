@@ -1,7 +1,7 @@
 #define FOLDER_PATH_LENGTH  64 // folder+handle should fit in 100 char field
 #define HANDLE_LENGTH       32
 #define TITLE_LENGTH       128 // this goes in 155 char field
-#define MAX_HISTOGRAMS   66535
+#define MAX_HISTOGRAMS   64000
 #define FILE_BUFSIZ    1048576 // 64k * 4 * 4 [1M]
 
 #define FLOAT_1D             1
