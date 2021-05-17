@@ -5,6 +5,8 @@
 #include "common.h"
 #include "midas.h"
 #include "web_server.h"
+#include "hist_output.h"
+
 
 /*#include "TH1.h"
 #include "TH1D.h"
@@ -13,25 +15,8 @@
 extern ANA_MODULE griffin_module;
 extern ANA_MODULE mdpp16_module;
 
-// Global variables to write root files
-//TFile *root_file;
-//TTree *myttree;
-//TNtuple *myntuple;
+unsigned int mdpp16_temporal_hist[MDPP_CHAN_NUM][HIST_SIZE] = {};
 
-#ifdef USE_INFLUXDB
-//Influx DB stuff
-//static std::string influxdb_hostname = "titan05.triumf.ca";
-//static std::string influxdb_port = "8086";
-//static std::string influxdb_dbname = "titan";
-//std::string influx_connection_string = "http://" + influxdb_hostname + ":" + influxdb_port + "/?db=" + influxdb_dbname;
-//std::unique_ptr<InfluxDB> influxdb_conn = influxdb::InfluxDBFactory::Get(influx_connection_string);
-#endif
-
-
-// Path to where we will write the root file
-//std::string path_to_root_file = "/home/ebit/daq/analyzer_root_files/";
-
-std::string root_file_name;
 char *analyzer_name = "Analyzer"; /* The analyzer name (client name)   */
 INT analyzer_loop_period = 0; /* analyzer_loop call interval[ms](0:disable) */
 INT odb_size = DEFAULT_ODB_SIZE; /* default ODB size */
@@ -88,11 +73,17 @@ ANALYZE_REQUEST analyze_request[] = {
 
 volatile int shutdown_webserver;
 static pthread_t web_thread;
+static pthread_t timer_thread;
+
 INT analyzer_init(){
-        // Create new thread which launches the Web server
+        long redis_output_timing = 1000;  // milliseconds
+
 
         int a1=1;
+
         pthread_create(&web_thread, NULL,(void* (*)(void*))web_server_main, &a1);
+        pthread_create(&timer_thread, NULL,(void* (*)(void*))hist_timer, (void*) redis_output_timing);
+
 
         return SUCCESS;
 }

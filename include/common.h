@@ -9,6 +9,21 @@
 #include "TNtuple.h"
 */
 #include <iostream>
+using namespace std;
+
+
+#define USE_REDIS
+
+/*#ifdef USE_REDIS
+  #include <sw/redis++/redis++.h>
+  using namespace sw::redis;
+#endif*/
+
+#define HIST_SIZE 2048
+#define MDPP_CHAN_NUM 16
+
+extern unsigned int mdpp16_temporal_hist[MDPP_CHAN_NUM][HIST_SIZE];
+
 /*
 #ifdef USE_INFLUXDB
 #include "InfluxDBFactory.h"
@@ -24,8 +39,9 @@ extern TFile *root_file;
 extern TNtuple *myntuple;
 extern TTree *myttree;
 */
+
 int report_counts(int interval, std::string daq_prefix, int MAX_CHANNELS, int addr_count[], unsigned int event_count);
-int write_pulse_height_event(std::string daq_prefix, int daq_chan, int flags, unsigned long long timestamp, int evadcdata);
+int write_pulse_height_event(std::string daq_prefix, int daq_chan, int flags, unsigned long long timestamp, int evadcdata);//, unsigned int temporal_hist[][HIST_SIZE]);
 int write_pulse_height_event_root(int chan, int flags, unsigned long long timestamp, int evadcdata);
 
 #endif

@@ -108,6 +108,7 @@ extern TH1IHist **wave_hist;
 TH1IHist *ph_hist_mdpp[MAX_CHAN];
 TH1IHist *e_hist_mdpp[MAX_CHAN];
 TH1IHist *cfd_hist_mdpp[MAX_CHAN];
+
 int hist_init_roody();
 int hist_mdpp_init();
 //---------------------------------------------------------------------
@@ -307,7 +308,7 @@ int mdpp16_event(EVENT_HEADER *pheader, void *pevent)
 			}
 		}
     if (evadcdata <= ENERGY_BINS && chan < MAX_CHAN && ts > 0) {
-      write_pulse_height_event("mdpp16", chan, flags, ts, evadcdata/INTEGRATION_LENGTH);
+      write_pulse_height_event("mdpp16", chan, flags, ts, evadcdata/INTEGRATION_LENGTH); //, mdpp16_temporal_hist);
     }
 
 //JON  hEnergy_vs_ts    [chan]-> Fill(evadcdata, ts/16000000);

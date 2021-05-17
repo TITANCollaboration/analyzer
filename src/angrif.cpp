@@ -94,6 +94,9 @@ int decode_griffin_event( unsigned int *evntbuf, int evntbuflen);
 int process_decoded_fragment(Grif_event *ptr);
 int unpack_griffin_bank(unsigned *buf, int len);
 
+unsigned int grif16_temporal_hist[2048];
+
+
 /////////////////////////////////////////////////////////////////////////////
 
 int griffin_init()
@@ -504,7 +507,7 @@ int process_decoded_fragment(Grif_event *ptr)
 //	if(chan>91 && chan<100) {sum_hist[4]->Fill(sum_hist[4],    (int)ecal,       1);}    //Quick hack for only LaBr3 channels
 	cfd_hist[chan]->Fill(cfd_hist[chan], ptr->cfd/256,    1);
 	hit_hist[1]->Fill(hit_hist[1],    chan,            1);
-  write_pulse_height_event("grif16", chan, ptr->pileup, ptr->timestamp, (int)energy);
+  //write_pulse_height_event("grif16", chan, ptr->pileup, ptr->timestamp, (int)energy, grif16_temporal_hist);
 
 
 	if( (len = ptr->waveform_length) != 0 ) {
