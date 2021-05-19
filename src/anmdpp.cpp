@@ -308,7 +308,9 @@ int mdpp16_event(EVENT_HEADER *pheader, void *pevent)
 			}
 		}
     if (evadcdata <= ENERGY_BINS && chan < MAX_CHAN && ts > 0) {
-      write_pulse_height_event("mdpp16", chan, flags, ts, evadcdata/INTEGRATION_LENGTH); //, mdpp16_temporal_hist);
+      #ifdef USE_REDIS
+          write_pulse_height_event("mdpp16", chan, flags, ts, evadcdata/INTEGRATION_LENGTH); //, mdpp16_temporal_hist);
+      #endif
     }
 
 //JON  hEnergy_vs_ts    [chan]-> Fill(evadcdata, ts/16000000);

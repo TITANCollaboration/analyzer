@@ -16,6 +16,9 @@ extern ANA_MODULE griffin_module;
 extern ANA_MODULE mdpp16_module;
 
 unsigned int mdpp16_temporal_hist[MDPP_CHAN_NUM][HIST_SIZE] = {};
+unsigned int timer_thread_termination = 0;
+unsigned long long mdpp16_tdc_last_time;
+
 
 char *analyzer_name = "Analyzer"; /* The analyzer name (client name)   */
 INT analyzer_loop_period = 0; /* analyzer_loop call interval[ms](0:disable) */
@@ -76,15 +79,8 @@ static pthread_t web_thread;
 static pthread_t timer_thread;
 
 INT analyzer_init(){
-        long redis_output_timing = 1000;  // milliseconds
-
-
         int a1=1;
-
         pthread_create(&web_thread, NULL,(void* (*)(void*))web_server_main, &a1);
-        pthread_create(&timer_thread, NULL,(void* (*)(void*))hist_timer, (void*) redis_output_timing);
-
-
         return SUCCESS;
 }
 
@@ -96,19 +92,25 @@ INT analyzer_exit(){
 }
 
 INT ana_begin_of_run(INT run_number, char *error){
-  printf("Starting Run: %i", run_number);
-  //root_file_name = path_to_root_file + std::to_string(run_number) + ".root";
-  //root_file = new TFile(root_file_name.c_str(),"NEW"); // Lets create our root file to write to
-  //myntuple = new TNtuple("EVENT_NTUPLE","NTuple of events", "chan:pulse_height:timestamp:flags");
+  printf("Starting Run: %i\n", run_number);
 
-  #ifdef USE_INFLUXDB
-//  influxdb_conn->batchOf(1000);
+  #ifdef USE_REDIS
+      long redis_output_timing = 1000;  // milliseconds
+      timer_thread_termination = 0;
+      pthread_create(&timer_thread, NULL,(void* (*)(void*))hist_timer, (void*) redis_output_timing);
   #endif
+
   return CM_SUCCESS;
 }
 INT ana_end_of_run(INT run_number, char *error){
   //root_file->Write();
   //root_file->Close();
+  #ifdef USE_REDIS
+      void *thread_status;
+      timer_thread_termination = 1;
+      pthread_join(timer_thread, &thread_status);
+  #endif
+
   return CM_SUCCESS;
 }
 INT ana_pause_run(INT run_number, char *error){

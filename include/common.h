@@ -12,17 +12,14 @@
 using namespace std;
 
 
-#define USE_REDIS
-
-/*#ifdef USE_REDIS
-  #include <sw/redis++/redis++.h>
-  using namespace sw::redis;
-#endif*/
+#define USE_REDIS  // Determines if we write out histogram data to REDIS
 
 #define HIST_SIZE 2048
 #define MDPP_CHAN_NUM 16
 
 extern unsigned int mdpp16_temporal_hist[MDPP_CHAN_NUM][HIST_SIZE];
+extern unsigned int timer_thread_termination;
+extern unsigned long long mdpp16_tdc_last_time;
 
 /*
 #ifdef USE_INFLUXDB
