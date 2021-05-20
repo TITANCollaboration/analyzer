@@ -27,13 +27,13 @@ int zeros[sizeof(HIST_SIZE)];
 void write_json_to_redis_queue(int time_diff) {
     StringBuffer s;
     auto millisec_since_epoch = duration_cast<milliseconds>(system_clock::now().time_since_epoch()).count();
-
+    int hist_sum = 0;
     Writer<StringBuffer> writer(s);
     writer.StartObject();               // Between StartObject()/EndObject(),
     writer.Key("unix_ts_ms");
     writer.Uint64(millisec_since_epoch);
     writer.Key("egun_voltage");
-    writer.Uint(1000);  // Need to get the voltage from somewhere...
+    writer.Uint(2000);  // Need to get the voltage from somewhere...
     writer.Key("time_diff");
     writer.Uint(time_diff);
     writer.Key("last_tdc_time");
@@ -47,13 +47,14 @@ void write_json_to_redis_queue(int time_diff) {
 
       //  }
         for (unsigned hist_bin = 0; hist_bin < HIST_SIZE; hist_bin++) {
+            hist_sum = hist_sum + mdpp16_temporal_hist[chan_num][hist_bin];
             writer.Uint(mdpp16_temporal_hist[chan_num][hist_bin]);                 // all values are elements of the array.
         }
         writer.EndArray();
     }
     writer.EndArray();
     writer.EndObject();
-
+    //cout << "Hist Sum: " << hist_sum << "\n";
   //  if(mdpp16_temporal_hist[chan_num][hist_bin] != 0) {
     try {
     redis.rpush("mdpp16:queue", {s.GetString()});
@@ -80,7 +81,7 @@ void hist_timer(void* timing_ms) {
         pthread_exit(NULL);
       }
       time_point<Clock> start = Clock::now();
-      sleep_for(2ms);
+      sleep_for(1ms);
       time_point<Clock> end = Clock::now();
       time_diff = time_diff + duration_cast<milliseconds>(end - start);
 

@@ -15,7 +15,7 @@ using namespace std;
 #define USE_REDIS  // Determines if we write out histogram data to REDIS
 
 #define HIST_SIZE 2048
-#define MDPP_CHAN_NUM 16
+#define MDPP_CHAN_NUM 1
 
 extern unsigned int mdpp16_temporal_hist[MDPP_CHAN_NUM][HIST_SIZE];
 extern unsigned int timer_thread_termination;

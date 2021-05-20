@@ -95,7 +95,7 @@ INT ana_begin_of_run(INT run_number, char *error){
   printf("Starting Run: %i\n", run_number);
 
   #ifdef USE_REDIS
-      long redis_output_timing = 1000;  // milliseconds
+      long redis_output_timing = 10;  // milliseconds
       timer_thread_termination = 0;
       pthread_create(&timer_thread, NULL,(void* (*)(void*))hist_timer, (void*) redis_output_timing);
   #endif
