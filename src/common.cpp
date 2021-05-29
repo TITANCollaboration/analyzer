@@ -8,6 +8,9 @@ int write_pulse_height_event(std::string daq_prefix, int daq_chan, int flags, un
   int chan;
   if(daq_prefix == "mdpp16") {
     mdpp16_temporal_hist[daq_chan][evadcdata]++;
+  //  if(daq_chan == 4) {
+    //  cout << "Chan4: " << evadcdata << '\n';
+  //  }
     mdpp16_tdc_last_time = timestamp;
 //    chan = daq_chan + 100;
   }
