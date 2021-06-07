@@ -17,7 +17,9 @@ extern ANA_MODULE mdpp16_module;
 
 unsigned int mdpp16_temporal_hist[MDPP_CHAN_NUM][HIST_SIZE] = {};
 unsigned int timer_thread_termination = 0;
-unsigned long long mdpp16_tdc_last_time;
+uint64_t mdpp16_tdc_last_time;
+uint64_t grif1616_tdc_last_time;
+
 
 
 char *analyzer_name = "Analyzer"; /* The analyzer name (client name)   */

@@ -6,6 +6,7 @@
 #include <string.h>  /* memset */
 #include <stdint.h>
 #include <iostream>
+#include <math.h>
 using namespace std;
 
 #include "midas.h"
@@ -208,11 +209,12 @@ int mdpp16_event(EVENT_HEADER *pheader, void *pevent)
 	int i, bank_len, err = 0;
 	DWORD *data;
 
-	int hsig, subhead, mod_id, tdc_res, adc_res, nword;
-	int dsig, fix, flags = 0, t, chan = 100, evdata;
-	uint32_t ts; // needed for 30-bit ts
+	int hsig, subhead = 0, mod_id, tdc_res, adc_res, nword;
+	int dsig = 0, flags = 0, t, chan = 100, evdata;
+	uint32_t ts = 0, extts = 0; // needed for 30-bit ts
+  uint64_t full_ts = 0;
 	int esig, counter;
-	int evadcdata = 0, evtdcdata, evrstdata, extts, trigchan;
+	int evadcdata = 0, evtdcdata, evrstdata, trigchan;
 	static int evcount = 0;
 
 	/* Added these to give a time interval to accrue counts. Current bugs:
@@ -263,67 +265,46 @@ int mdpp16_event(EVENT_HEADER *pheader, void *pevent)
 		      11   for EOE mark (30-bit ts)
 		      0000 for fill dummy */
 		dsig    = (data[i] >> 30) & 0x3;
-		fix     = (data[i] >> 28) & 0x3;
-
+    subhead = (data[i] >> 28) & 0x3;
 		// DATA word for TDC, ADC or reset event. 0b0001
-		if ( ( (data[i] >> 28) & 0xF) == 1 ) {
+    if(data[i] == 4294967295) {
+      continue;
+    }
+    if ( dsig == 3 ) {
+  			ts =  ((data[i] >> 0) & 0x3FFFFFFF);// concatenate 14 bits and 16 bits...
+        continue;
+  	}
+		if ( subhead == 1 ) {
 
 			flags    = (data[i] >> 22) & 0x3;// pileup or overflow/underflow
 			trigchan = (data[i] >> 16) & 0x3F; // All 6 bits for determining ADC, TDC or trig0/trig1 (reset)
+      evadcdata = 0;
 
-			if ( trigchan == 33 ) { // Reset event is 33 on 6 bits: 100001
-				evrstdata = (data[i] >> 0) & 0xF; // channel index, 4 bits
-				//JON  hHitPat->Fill(evrstdata); // Fill on reset events
-			}
-
-			// hHitPat->Fill( chan );
-			else if ( trigchan < MAX_CHAN ) { // ADC value caught
-				chan      = (data[i] >> 16) & 0x1F;
+			if ( trigchan < MAX_CHAN ) { // ADC value caught
+				chan      = (data[i] >> 16) & 0x3F;
 				//printf("Channel : %i\n", chan);
 				evadcdata = (data[i] >> 0 ) & 0xFFFF;
 				++addr_count_mdpp[chan];
 			}
-			else if (trigchan < 32) { // TDC time difference caught if above 16 and less than 32
-				evtdcdata = (data[i] >> 0 ) & 0xFFFF;
-			}
-		}
-
 		// Extended timestamp word. If dsig+fix==0010, ext ts caught
-		if ( ((data[i] >> 28) & 0xF) == 2 ) {
-			extts = (data[i] >> 0) & 0xFFFF;
-		}
-
+  }
+  else if ( subhead == 2 ) {
+    extts = (data[i] >> 0) & 0xFFFF;
+	}
 		// EOE marker, event counter / timestamp. If dsig == 0b11, ts caught
-		if ( dsig == 3 ) {
-			ts =  ((data[i] >> 0) & 0x3FFFFFFF);// concatenate 14 bits and 16 bits...
-		}
-
 		if (flags == 0) {
 			if (evadcdata <= ENERGY_BINS && chan < MAX_CHAN) {
 				//printf("Adding entry for energy hit %i on channel : %i\n", evadcdata, chan);
 				ph_hist_mdpp[chan]->Fill(ph_hist_mdpp[chan],  (int)evadcdata,     1);
         mdpp_event_count = mdpp_event_count + 1;
-        //write_pulse_height_event(influxdb_conn_mdpp, global_run_number, "mdpp16", 0, chan, flags, 0, evadcdata);
-
+        #ifdef USE_REDIS
+            write_pulse_height_event("mdpp16", chan, flags, 0, evadcdata); //, mdpp16_temporal_hist);
+        #endif
 			}
 		}
-    if (evadcdata <= ENERGY_BINS && chan < MAX_CHAN && ts > 0) {
-      #ifdef USE_REDIS
-          write_pulse_height_event("mdpp16", chan, flags, ts, evadcdata); //, mdpp16_temporal_hist);
-          //cout << "Pulse Height: " << evadcdata/INTEGRATION_LENGTH;
-      #endif
-    }
-
-//JON  hEnergy_vs_ts    [chan]-> Fill(evadcdata, ts/16000000);
-		//JON hTDC             [chan]-> Fill(evtdcdata); // TDC value (event time after window opened)
-		//hCalEnergy1      [chan]->Fill((evadcdata-ana_param.peak1_channel)*(ana_param.peak2_energy-ana_param.peak1_energy)/(ana_param.peak2_channel - ana_param.peak1_channel )+ ana_param.peak1_energy);
-
-
-		//hHitPat[chan   ]-> Fill(chan);
-		/* if (flags==0){ // Fill ADC data only when no flags are on */
-		/*   hEnergy_flagsrm[chan]-> Fill(evadcdata); */
-		/* } */
-	}
+	} // End of for loop
+  mdpp16_tdc_last_time = ts + (extts * pow(2, 30));
+  cout << "TDC Timestamp low: " << ts << "high: " << extts <<  "- Full: " << mdpp16_tdc_last_time << "\n";
 	esig    = (data[i] >> 30) & 0x3;
 	counter = (data[i] >> 0) & 0x3FFFFFFF; // low 30bits
 	if ( debug ) {
@@ -335,6 +316,5 @@ int mdpp16_event(EVENT_HEADER *pheader, void *pevent)
 	if ( hsig != 1 || esig != 3 || t != 0 || subhead != 0 || mod_id != 1 ) {
 		err = 1;
 	}
-	//if( err == 1 ){ printf("Error: event %d\n", evcount); }
 	return (0);
 }

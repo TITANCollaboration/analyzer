@@ -33,6 +33,7 @@ link_libraries(${REDIS_PLUS_PLUS_LIB})
 # find_package(ROOT CONFIG REQUIRED)
 # find_package(InfluxDB REQUIRED)
 find_package(ZLIB REQUIRED)
+find_package(cppzmq)
 
 # include(${ROOT_USE_FILE})
 
