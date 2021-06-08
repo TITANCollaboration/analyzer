@@ -203,7 +203,6 @@ int hist_mdpp_init()
 
 int mdpp16_event(EVENT_HEADER *pheader, void *pevent)
 {
-
 	/* BeginTime needs to be global? startTime should be set to 0 at the beginning of each event? and then
 	   something something...  */
 	int i, bank_len, err = 0;
@@ -298,13 +297,13 @@ int mdpp16_event(EVENT_HEADER *pheader, void *pevent)
 				ph_hist_mdpp[chan]->Fill(ph_hist_mdpp[chan],  (int)evadcdata,     1);
         mdpp_event_count = mdpp_event_count + 1;
         #ifdef USE_REDIS
-            write_pulse_height_event("mdpp16", chan, flags, 0, evadcdata); //, mdpp16_temporal_hist);
+          write_pulse_height_event("mdpp16", chan, flags, 0, evadcdata); //, mdpp16_temporal_hist);
         #endif
 			}
 		}
 	} // End of for loop
   mdpp16_tdc_last_time = ts + (extts * pow(2, 30));
-  cout << "TDC Timestamp low: " << ts << "high: " << extts <<  "- Full: " << mdpp16_tdc_last_time << "\n";
+  //cout << "TDC Timestamp low: " << ts << "high: " << extts <<  "- Full: " << mdpp16_tdc_last_time << "\n";
 	esig    = (data[i] >> 30) & 0x3;
 	counter = (data[i] >> 0) & 0x3FFFFFFF; // low 30bits
 	if ( debug ) {

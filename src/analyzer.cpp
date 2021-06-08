@@ -6,6 +6,7 @@
 #include "midas.h"
 #include "web_server.h"
 #include "hist_output.h"
+#include "ebit_ppg_reader.h"
 
 
 /*#include "TH1.h"
@@ -16,7 +17,8 @@ extern ANA_MODULE griffin_module;
 extern ANA_MODULE mdpp16_module;
 
 unsigned int mdpp16_temporal_hist[MDPP_CHAN_NUM][HIST_SIZE] = {};
-unsigned int timer_thread_termination = 0;
+unsigned int mytimer_thread_termination = 0;
+unsigned int ebit_ppg_reader_thread_termination = 0;
 uint64_t mdpp16_tdc_last_time;
 uint64_t grif1616_tdc_last_time;
 
@@ -79,6 +81,7 @@ ANALYZE_REQUEST analyze_request[] = {
 volatile int shutdown_webserver;
 static pthread_t web_thread;
 static pthread_t timer_thread;
+static pthread_t ebit_ppg_reader_thread;
 
 INT analyzer_init(){
         int a1=1;
@@ -87,32 +90,45 @@ INT analyzer_init(){
 }
 
 INT analyzer_exit(){
-        printf("waiting for server to shutdown ...\n");
-        shutdown_webserver = 1;
-        pthread_join(web_thread, NULL);
-        return CM_SUCCESS;
+  void *thread_status;
+  printf("waiting for server to shutdown ...\n");
+  shutdown_webserver = 1;
+  pthread_join(web_thread, NULL);
+
+  ebit_ppg_reader_thread_termination = 1;
+  pthread_join(ebit_ppg_reader_thread, &thread_status);
+  #ifdef USE_REDIS
+    mytimer_thread_termination = 1;
+    pthread_join(timer_thread, &thread_status);
+  #endif
+
+  return CM_SUCCESS;
 }
 
 INT ana_begin_of_run(INT run_number, char *error){
   printf("Starting Run: %i\n", run_number);
 
+  mytimer_thread_termination = 0;
+  ebit_ppg_reader_thread_termination = 0;
   #ifdef USE_REDIS
       long redis_output_timing = 100;  // milliseconds
-      timer_thread_termination = 0;
-      pthread_create(&timer_thread, NULL,(void* (*)(void*))hist_timer, (void*) redis_output_timing);
+      pthread_create(&timer_thread, NULL, (void* (*)(void*))hist_timer, (void*) redis_output_timing);
   #endif
-
+    // Testing this!
+    pthread_create(&ebit_ppg_reader_thread, NULL, (void* (*)(void*))read_ebit_parameter, 0);
   return CM_SUCCESS;
 }
 INT ana_end_of_run(INT run_number, char *error){
   //root_file->Write();
   //root_file->Close();
+  void *thread_status;
   #ifdef USE_REDIS
-      void *thread_status;
-      timer_thread_termination = 1;
+      mytimer_thread_termination = 1;
       pthread_join(timer_thread, &thread_status);
   #endif
 
+  ebit_ppg_reader_thread_termination = 1;
+  pthread_join(ebit_ppg_reader_thread, &thread_status);
   return CM_SUCCESS;
 }
 INT ana_pause_run(INT run_number, char *error){

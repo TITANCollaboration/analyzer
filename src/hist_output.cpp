@@ -76,7 +76,8 @@ void hist_timer(void* timing_ms) {
     cout << "Starting Histogram output thread...\n";
 
     while (1) {  // Infinite loop.. when time becomes a loop, when time becomes a loop, when time becomes a loop, ...
-      if(timer_thread_termination != 0 ) {
+      if(mytimer_thread_termination != 0 ) {
+        cout << "Timer thread: " << mytimer_thread_termination << "\n";
         cout << "Terminating Timer Thread\n";
         pthread_exit(NULL);
       }
