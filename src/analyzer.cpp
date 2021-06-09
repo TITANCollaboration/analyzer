@@ -20,7 +20,7 @@ unsigned int mdpp16_temporal_hist[MDPP_CHAN_NUM][HIST_SIZE] = {};
 unsigned int mytimer_thread_termination = 0;
 unsigned int ebit_ppg_reader_thread_termination = 0;
 uint64_t mdpp16_tdc_last_time;
-uint64_t grif1616_tdc_last_time;
+uint64_t grif16_tdc_last_time;
 
 
 
@@ -115,7 +115,7 @@ INT ana_begin_of_run(INT run_number, char *error){
       pthread_create(&timer_thread, NULL, (void* (*)(void*))hist_timer, (void*) redis_output_timing);
   #endif
     // Testing this!
-    pthread_create(&ebit_ppg_reader_thread, NULL, (void* (*)(void*))read_ebit_parameter, 0);
+    pthread_create(&ebit_ppg_reader_thread, NULL, (void* (*)(void*))read_ebit_parameter, (void*) run_number);
   return CM_SUCCESS;
 }
 INT ana_end_of_run(INT run_number, char *error){
