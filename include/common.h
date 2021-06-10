@@ -22,7 +22,7 @@ extern unsigned int mytimer_thread_termination;
 extern unsigned int ebit_ppg_reader_thread_termination;
 extern uint64_t mdpp16_tdc_last_time;
 extern uint64_t grif16_tdc_last_time;
-
+extern float egun_voltage;
 
 /*
 #ifdef USE_INFLUXDB

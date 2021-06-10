@@ -39,6 +39,8 @@ void write_csv_data(std::ofstream& run_csv_file, const char* json, uint64_t curr
   cout << "My timestamp: " << ppg_unix_timestamp.GetInt() << '\n';
   cout << "My Action: " << ppg_action.GetString() << '\n';
 
+  egun_voltage = ppg_value.GetFloat();
+
   run_csv_file << ppg_unix_timestamp.GetInt() << ","
                << ppg_action.GetString() << ","
                << ppg_parameter.GetString() << ","

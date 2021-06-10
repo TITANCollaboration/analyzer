@@ -33,7 +33,7 @@ void write_json_to_redis_queue(int time_diff) {
     writer.Key("unix_ts_ms");
     writer.Uint64(millisec_since_epoch);
     writer.Key("egun_voltage");
-    writer.Uint(2000);  // Need to get the voltage from somewhere...
+    writer.Uint(egun_voltage);  // Need to get the voltage from somewhere...
     writer.Key("time_diff");
     writer.Uint(time_diff);
     writer.Key("last_tdc_time");
