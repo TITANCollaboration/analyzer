@@ -72,6 +72,8 @@ void read_ebit_parameter(int run_number) {
 
   subscriber.connect("tcp://titan02.triumf.ca:5555");
   subscriber.set(zmq::sockopt::subscribe, "");
+  subscriber.set(zmq::sockopt::rcvtimeo, 2000); // every 2 seconds timeout so we can check if we need to close the thread
+
 
   while (1) {  // Infinite loop.. when time becomes a loop, when time becomes a loop, when time becomes a loop, ...
 
@@ -90,7 +92,7 @@ void read_ebit_parameter(int run_number) {
     cout << "Recieved message:" << incoming_msg.str() << "\n";
 
     const char* json = incoming_msg.str().c_str(); // !!Uncomment me after testing
-    //const char* json = "{\"timestamp\":1000000000,\"action\":\"start\",\"parameter\":\"dt5\",\"value\":5}"; // !!Comment me out after testing
+    const char* json = "{\"timestamp\":1000000000,\"action\":\"start\",\"parameter\":\"dt5\",\"value\":5}"; // !!Comment me out after testing
 
     write_csv_data(run_csv_file, json, current_unix_timestamp);
     //sleep_for(1ms);
