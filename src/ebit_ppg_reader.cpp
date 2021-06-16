@@ -23,7 +23,7 @@ using std::this_thread::sleep_for;
 std::ofstream create_csv_file(int run_number, string filename) {
 
   std::ofstream run_csv_file(filename);
-  run_csv_file << "ppg_unix_timestamp, ppg_action, ppg_parameter, ppg_value, mdpp16_timestamp, grif16_timestamp, local_unix_timestamp" << "\n";
+  run_csv_file << "ppg_unix_timestamp,ppg_action,ppg_parameter,ppg_value,mdpp16_timestamp,grif16_timestamp,local_unix_timestamp" << "\n";
   return run_csv_file;
 }
 
