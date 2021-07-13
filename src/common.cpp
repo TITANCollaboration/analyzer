@@ -7,7 +7,9 @@ int write_pulse_height_event(std::string daq_prefix, int daq_chan, int flags, ui
   // Used to generate histogram data for output to realtime system (REDIS)
   //int chan;
   if(daq_prefix == "mdpp16") {
-    mdpp16_temporal_hist[daq_chan][evadcdata]++;
+    if(pause_for_change == 0) {
+      mdpp16_temporal_hist[daq_chan][evadcdata]++;
+    }
   //  if(daq_chan == 4) {
     //  cout << "Chan4: " << evadcdata << '\n';
   //  }

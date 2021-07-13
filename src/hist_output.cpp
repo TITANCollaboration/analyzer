@@ -80,15 +80,17 @@ void hist_timer(void* timing_ms) {
         cout << "Terminating Timer Thread\n";
         pthread_exit(NULL);
       }
-      time_point<Clock> start = Clock::now();
-      sleep_for(1ms);
-      time_point<Clock> end = Clock::now();
-      time_diff = time_diff + duration_cast<milliseconds>(end - start);
+      if (pause_for_change == 0) {
+        time_point<Clock> start = Clock::now();
+        sleep_for(1ms);
+        time_point<Clock> end = Clock::now();
+        time_diff = time_diff + duration_cast<milliseconds>(end - start);
 
-      if (time_diff.count() >= my_timing_ms) {
-        write_json_to_redis_queue(time_diff.count());
-        time_diff = std::chrono::milliseconds{0};  // Reset time_diff to 0
-        memset(mdpp16_temporal_hist, 0, sizeof(mdpp16_temporal_hist));  // Reset entire array to 0
+        if (time_diff.count() >= my_timing_ms) {
+          write_json_to_redis_queue(time_diff.count());
+          time_diff = std::chrono::milliseconds{0};  // Reset time_diff to 0
+          memset(mdpp16_temporal_hist, 0, sizeof(mdpp16_temporal_hist));  // Reset entire array to 0
+        }
       }
    }
 }

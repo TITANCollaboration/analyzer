@@ -22,6 +22,7 @@ unsigned int ebit_ppg_reader_thread_termination = 0;
 uint64_t mdpp16_tdc_last_time = 0;
 uint64_t grif16_tdc_last_time = 0;
 float egun_voltage = 0.0;
+int pause_for_change = 0;
 
 
 char *analyzer_name = "Analyzer"; /* The analyzer name (client name)   */

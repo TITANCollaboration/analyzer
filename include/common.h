@@ -23,6 +23,7 @@ extern unsigned int ebit_ppg_reader_thread_termination;
 extern uint64_t mdpp16_tdc_last_time;
 extern uint64_t grif16_tdc_last_time;
 extern float egun_voltage;
+extern int pause_for_change; // variable that lets the system know if it should not count values for a little bit
 
 /*
 #ifdef USE_INFLUXDB

@@ -27,29 +27,45 @@ std::ofstream create_csv_file(int run_number, string filename) {
   return run_csv_file;
 }
 
+void check_action_value(auto ppg_data, const char* json) {
+  // Yes this is a terrible way of handling this as I'm decoding twice but oh well, I just didn't
+  // feel like writing it better, sorry..
+  ppg_data.Parse(json);  // Parse the JSON, should be ?result?
+  Value& ppg_action = ppg_data["action"];
+  if (ppg_action.GetString() == "starting") {
+    // pause_for_change = 1;
+  } else if(ppg_action.GetString() == "started") {
+    // pause_for_change = 0;
+  }
+
+}
 void write_csv_data(std::ofstream& run_csv_file, const char* json, uint64_t current_unix_timestamp) {
-  // 2. Modify it by DOM.
   Document ppg_data;  // Setup document type for incoming JSON
   ppg_data.Parse(json);  // Parse the JSON, should be ?result?
-  Value& ppg_unix_timestamp = ppg_data["timestamp"];
-  Value& ppg_action = ppg_data["action"];
-  Value& ppg_parameter = ppg_data["parameter"];
-  Value& ppg_value = ppg_data["value"];
+  Value& ppg_command = ppg_data["command"];
+  Value* ppg_dt5_value;
+  if(ppg_data["command"] != "new_cycle") {
+    return;
+  }
+  Value& ppg_unix_timestamp = ppg_data["timestamp"];  // Get timestamp
+  Value& ppg_scan_settings = ppg_data["scan_settings"]["EPICS"]; // Dig down to the EPICS info
 
-  cout << "My timestamp: " << ppg_unix_timestamp.GetInt() << '\n';
-  cout << "My Action: " << ppg_action.GetString() << '\n';
+  assert(ppg_scan_settings.IsArray());
+  for (auto& epics_array : ppg_scan_settings.GetArray()) {  // Loop through EPICS list until we get the DT5 value
+    if(epics_array["demand_dev"] == "EBIT:DT7E5PL:VOL") {
+      ppg_dt5_value = &epics_array["measured_val"];
+      egun_voltage = ppg_dt5_value->GetDouble();
+    }
+  }
 
-  egun_voltage = ppg_value.GetFloat();
-
-  run_csv_file << ppg_unix_timestamp.GetInt() << ","
-               << ppg_action.GetString() << ","
-               << ppg_parameter.GetString() << ","
-               << ppg_value.GetFloat() << ","
+  run_csv_file << ppg_unix_timestamp.GetUint64() << ","
+               << ppg_command.GetString() << ","
+               << "EBIT:DT7E5PL:VOL" << ","
+               << egun_voltage << ","
                << mdpp16_tdc_last_time << ","
                << grif16_tdc_last_time << ","
                << current_unix_timestamp
                << "\n";
-
 }
 
 void close_csv_file(std::ofstream& run_csv_file) {
@@ -91,8 +107,10 @@ void read_ebit_parameter(int run_number) {
     current_unix_timestamp = std::chrono::duration_cast<std::chrono::milliseconds>(p1.time_since_epoch()).count();
     cout << "Recieved message:" << incoming_msg.str() << "\n";
 
-    const char* json = incoming_msg.str().c_str(); // !!Uncomment me after testing
-    const char* json = "{\"timestamp\":1000000000,\"action\":\"start\",\"parameter\":\"dt5\",\"value\":5}"; // !!Comment me out after testing
+    //const char* json = incoming_msg.str().c_str(); // !!Uncomment me after testing
+    const char* json = "{\"command\": \"new_cycle\", \"cycle_number\": 12, \"run_number\": 113 , \"scan_settings\": {\"EPICS\": [{\"demand_dev\": \"EBIT:DT7E5PL:VOL\", \"demand_val\": 100.0, \"human_name\": \"Drift tube 5 - PL\", \"measured_dev\":\"EBIT:DT7E5PL:RDVOL\", \"measured_val\": 99.97}],\"FC0InOut\": null,\"PPG\": []},\"timestamp\": 1624392506385}";
+    cout << json << "\n";
+    //const char* json = "{\"timestamp\":1000000000,\"action\":\"start\",\"parameter\":\"dt5\",\"value\":5}"; // !!Comment me out after testing
 
     write_csv_data(run_csv_file, json, current_unix_timestamp);
     //sleep_for(1ms);
