@@ -26,6 +26,8 @@ int zeros[sizeof(HIST_SIZE)];
 
 void write_json_to_redis_queue(int time_diff) {
     StringBuffer s;
+    unsigned chan_num = 0;
+    unsigned hist_bin = 0;
     auto millisec_since_epoch = duration_cast<milliseconds>(system_clock::now().time_since_epoch()).count();
     int hist_sum = 0;
     Writer<StringBuffer> writer(s);
@@ -41,12 +43,12 @@ void write_json_to_redis_queue(int time_diff) {
 	  writer.Key("hist");
     writer.StartArray();                // Between StartArray()/EndArray(),
 
-    for (unsigned chan_num = 0; chan_num < MDPP_CHAN_NUM; chan_num++) {
+    for (chan_num = 0; chan_num < MDPP_CHAN_NUM; chan_num++) {
         writer.StartArray();                // Between StartArray()/EndArray(),
         //if(memcmp(mdpp16_temporal_hist[chan_num],zeros,sizeof(mdpp16_temporal_hist[chan_num])) == 0) {
 
       //  }
-        for (unsigned hist_bin = 0; hist_bin < HIST_SIZE; hist_bin++) {
+        for (hist_bin = 0; hist_bin < HIST_SIZE; hist_bin++) {
             hist_sum = hist_sum + mdpp16_temporal_hist[chan_num][hist_bin];
             writer.Uint(mdpp16_temporal_hist[chan_num][hist_bin]);                 // all values are elements of the array.
         }

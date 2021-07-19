@@ -91,17 +91,17 @@ INT analyzer_init(){
 }
 
 INT analyzer_exit(){
-  void *thread_status;
+  void *thread_status_redis, *thread_status_ppg;
   printf("waiting for server to shutdown ...\n");
   shutdown_webserver = 1;
   pthread_join(web_thread, NULL);
 
-  ebit_ppg_reader_thread_termination = 1;
-  pthread_join(ebit_ppg_reader_thread, &thread_status);
-  #ifdef USE_REDIS
-    mytimer_thread_termination = 1;
-    pthread_join(timer_thread, &thread_status);
-  #endif
+//  ebit_ppg_reader_thread_termination = 1;
+//  pthread_join(ebit_ppg_reader_thread, &thread_status_ppg);
+//  #ifdef USE_REDIS
+//    mytimer_thread_termination = 1;
+//    pthread_join(timer_thread, &thread_status_redis);
+//  #endif
 
   return CM_SUCCESS;
 }
@@ -122,14 +122,14 @@ INT ana_begin_of_run(INT run_number, char *error){
 INT ana_end_of_run(INT run_number, char *error){
   //root_file->Write();
   //root_file->Close();
-  void *thread_status;
+  void *thread_status_ppg, *thread_status_redis;
   #ifdef USE_REDIS
       mytimer_thread_termination = 1;
-      pthread_join(timer_thread, &thread_status);
+      pthread_join(timer_thread, &thread_status_redis);
   #endif
 
   ebit_ppg_reader_thread_termination = 1;
-  pthread_join(ebit_ppg_reader_thread, &thread_status);
+  pthread_join(ebit_ppg_reader_thread, &thread_status_ppg);
   return CM_SUCCESS;
 }
 INT ana_pause_run(INT run_number, char *error){

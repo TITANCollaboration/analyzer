@@ -26,12 +26,15 @@ int griffin_bor(INT run_number);
 int griffin_eor(INT run_number);
 void read_odb_gains();  int read_odb_histinfo();  int hist_init();
 float spread(int val){
-	return( val + rand()/(1.0*RAND_MAX) );
+  /* jonr: Apprently this is used to allow for easier rebinning, as this is an online
+     analyzer that will not ever happen. Also RAND_MAX is library dependent and so
+     results can be altered by system upgrades.  */
+	return( val + rand()/(1.0*RAND_MAX) );  //
 }
 
 ANA_MODULE griffin_module = {
 	"Griffin",             /* module name           */
-	"UrMom",               /* author                */
+	"many",               /* author                */
 	griffin,               /* event routine         */
 	griffin_bor,           /* BOR routine           */
 	griffin_eor,           /* EOR routine           */
@@ -494,8 +497,8 @@ int process_decoded_fragment(Grif_event *ptr)
 		return(0);
 	}
 	energy = ( ptr->integ == 0 ) ? 0 : ptr->energy/ptr->integ;
-	ecal   = spread(energy) * gains[chan] + offsets[chan];
-
+	//ecal   = spread(energy) * gains[chan] + offsets[chan];
+	ecal   = energy * gains[chan] + offsets[chan];
 	//++rate_data[chan];
 	ph_hist[chan]->Fill(ph_hist[chan],  (int)energy,     1);
 	hit_hist[3]->Fill(hit_hist[3],    chan,            1);

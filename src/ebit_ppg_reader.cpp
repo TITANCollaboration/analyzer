@@ -10,6 +10,7 @@
 #include "rapidjson/document.h"
 #include "rapidjson/writer.h"
 #include "rapidjson/stringbuffer.h"
+#include "rapidjson/ostreamwrapper.h"
 
 using namespace rapidjson;
 using Clock = std::chrono::steady_clock;
@@ -39,9 +40,36 @@ void check_action_value(auto ppg_data, const char* json) {
   }
 
 }
+
+const char* add_to_json(const char* json, uint64_t current_unix_timestamp) {
+
+  Document ppg_data;  // Setup document type for incoming JSON
+  //Value mine(kStringType);
+  ppg_data.Parse(json);  // Parse the JSON, should be ?result?
+  ppg_data.AddMember("mdpp16_tdc_last_time", mdpp16_tdc_last_time, ppg_data.GetAllocator());
+  ppg_data.AddMember("grif16_tdc_last_time", grif16_tdc_last_time, ppg_data.GetAllocator());
+  ppg_data.AddMember("current_unix_timestamp", current_unix_timestamp, ppg_data.GetAllocator());
+
+//  << mdpp16_tdc_last_time << ","
+//  << grif16_tdc_last_time << ","
+//  << current_unix_timestamp
+
+  StringBuffer buffer;
+  Writer<StringBuffer> writer(buffer);
+  ppg_data.Accept(writer);
+
+  const char* new_json_output = buffer.GetString();
+  //char[] ch = new_json_output;
+  static string new_json_string;
+  new_json_string = new_json_output;
+  //cout <<"New output: " << new_json_output << "\n";
+  return new_json_string.c_str();
+}
+
 void write_csv_data(std::ofstream& run_csv_file, const char* json, uint64_t current_unix_timestamp) {
   Document ppg_data;  // Setup document type for incoming JSON
   ppg_data.Parse(json);  // Parse the JSON, should be ?result?
+  // cout << "My Json: " << json <<"\n";
   Value& ppg_command = ppg_data["command"];
   Value* ppg_dt5_value;
   if(ppg_data["command"] != "new_cycle") {
@@ -76,6 +104,11 @@ void read_ebit_parameter(int run_number) {
   uint64_t current_unix_timestamp = 0;
   std::ofstream run_csv_file;
   std::string filename = "run_" + to_string(run_number) + "_time_voltage.csv";
+  std::string json_filename = "run_" + to_string(run_number) + "_all.json";
+  //ofstream ofs("run_" + to_string(run_number) + "_all.json");
+  //OStreamWrapper osw(ofs);
+  std::ofstream json_file(json_filename);
+
   zmq::context_t context(1);
   cout << "My Run Number!: " << run_number << "\n";
 
@@ -96,6 +129,8 @@ void read_ebit_parameter(int run_number) {
     if(ebit_ppg_reader_thread_termination != 0 ) {
       cout << "Closing CSV file: " << filename << "\n";
       close_csv_file(run_csv_file);
+      cout << "Closing JSON file: " << json_filename << "\n";
+      json_file.close();
       cout << "Terminating EBIT PPG Reader Thread\n";
       pthread_exit(NULL);
     }
@@ -109,8 +144,14 @@ void read_ebit_parameter(int run_number) {
 
     //const char* json = incoming_msg.str().c_str(); // !!Uncomment me after testing
     const char* json = "{\"command\": \"new_cycle\", \"cycle_number\": 12, \"run_number\": 113 , \"scan_settings\": {\"EPICS\": [{\"demand_dev\": \"EBIT:DT7E5PL:VOL\", \"demand_val\": 100.0, \"human_name\": \"Drift tube 5 - PL\", \"measured_dev\":\"EBIT:DT7E5PL:RDVOL\", \"measured_val\": 99.97}],\"FC0InOut\": null,\"PPG\": []},\"timestamp\": 1624392506385}";
-    cout << json << "\n";
-    //const char* json = "{\"timestamp\":1000000000,\"action\":\"start\",\"parameter\":\"dt5\",\"value\":5}"; // !!Comment me out after testing
+
+    // cout << json << "\n";
+    const char* new_json = add_to_json(json, current_unix_timestamp);
+    json_file << new_json << "\n";
+  /*  Document ppg_data;  // Setup document type for incoming JSON
+    ppg_data.Parse(new_json);  // Parse the JSON, should be ?result?
+    Writer<OStreamWrapper> writer(osw);
+    ppg_data.Accept(writer);*/
 
     write_csv_data(run_csv_file, json, current_unix_timestamp);
     //sleep_for(1ms);

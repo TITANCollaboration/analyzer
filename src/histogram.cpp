@@ -12,7 +12,7 @@
 
 static char current_path[FOLDER_PATH_LENGTH];
 static void *histogram_list[MAX_HISTOGRAMS];
-static int next_histogram;
+static int next_histogram = 0;
 static int check_folder(char *folder); // return valid length (or -1) if invalid
 
 int open_folder(char* folder)
