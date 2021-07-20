@@ -35,7 +35,7 @@ using namespace std;
 
 #define INTEGRATION_LENGTH  8
 
-#define NUM_ODB_CHAN     459 // size of msc table in odb
+#define NUM_ODB_CHAN     16 // size of msc table in odb
 #define MAX_SAMPLE_LEN  4096
 #define ENERGY_BINS    8192 /* 65536 131072 262144 */
 #define NUM_CLOVER        16
@@ -63,6 +63,9 @@ static short address_chan[MAX_ADDRESS];
 static int addr_count_mdpp[MAX_CHAN + 1];// = {0};  // this will be used to calculate rates per channel
 time_t last_update_mdpp = time(NULL);
 unsigned int mdpp_event_count = 0;
+
+float mdpp16_gains[NUM_ODB_CHAN];
+float mdpp16_offsets[NUM_ODB_CHAN];
 
 static int debug; // only accessible through gdb
 //TH1IHist *hit_hist[N_HITPAT];
@@ -109,7 +112,7 @@ extern TH1IHist **wave_hist;
 TH1IHist *ph_hist_mdpp[MAX_CHAN];
 TH1IHist *e_hist_mdpp[MAX_CHAN];
 TH1IHist *cfd_hist_mdpp[MAX_CHAN];
-
+void read_mdpp16_odb_gains();
 int hist_init_roody();
 int hist_mdpp_init();
 //---------------------------------------------------------------------
@@ -126,6 +129,33 @@ extern HNDLE hDB;                     /* Odb Handle */
 MDPP16_ANALYSER_PARAMETERS ana_param;                    /* Odb settings */
 MDPP16_ANALYSER_PARAMETERS_STR(ana_param_str);     /* Book Setting space */
 
+
+void read_mdpp16_odb_gains()
+{
+	int status, size;
+	char tmp[STRING_LEN];
+	HNDLE hKey;
+
+	// readgains and offsets from ODB
+	sprintf(tmp,"/DAQ/MSC/mdpp16_gain");
+	if( (status=db_find_key(hDB, 0, tmp, &hKey)) != DB_SUCCESS) {
+		cm_msg(MINFO,"FE","Key %s not found", tmp); return;
+	}
+	size=sizeof(mdpp16_gains);
+	if( (db_get_data(hDB,hKey,&mdpp16_gains,&size,TID_FLOAT)) != DB_SUCCESS) {
+		cm_msg(MINFO,"FE","Can't get data for Key %s", tmp); return;
+	}
+	sprintf(tmp,"/DAQ/MSC/mdpp16_offset");
+	if( (status=db_find_key(hDB, 0, tmp, &hKey)) != DB_SUCCESS) {
+		cm_msg(MINFO,"FE","Key %s not found", tmp); return;
+	}
+	size=sizeof(mdpp16_offsets);
+	if( (db_get_data(hDB,hKey,&mdpp16_offsets,&size,TID_FLOAT)) != DB_SUCCESS) {
+		cm_msg(MINFO,"FE","Can't get data for Key %s", tmp); return;
+	}
+}
+
+
 int mdpp16_init(void)
 {
 	char odb_str[128], errmsg[128];
@@ -133,6 +163,12 @@ int mdpp16_init(void)
 	int size, status;
 	HNDLE hSet;
 
+  read_mdpp16_odb_gains();     // Print the loaded gains and offsets
+  fprintf(stdout,"\nMDPP16: Read Gain/Offset values from ODB\nIndex\tGain\tOffset\n");
+
+  for(int i=0; i<NUM_ODB_CHAN; i++) {
+		fprintf(stdout,"%d\t%f\t%f\n",i,mdpp16_gains[i],mdpp16_offsets[i]);
+	}
 	printf("Were init'ing the crap out of the MDPP16...\n");
 	size = sizeof(MDPP16_ANALYSER_PARAMETERS);
 
@@ -146,6 +182,7 @@ int mdpp16_init(void)
 		cm_msg(MINFO, "FE", "Failed to enable ana param hotlink", set_str);
 
 	}
+
 	hist_mdpp_init();
 //  influxdb_conn_mdpp->batchOf(1000);
 	return SUCCESS;
@@ -205,7 +242,7 @@ int mdpp16_event(EVENT_HEADER *pheader, void *pevent)
 {
 	/* BeginTime needs to be global? startTime should be set to 0 at the beginning of each event? and then
 	   something something...  */
-	int i, bank_len, err = 0;
+	int i, ecal = 0, bank_len, err = 0;
 	DWORD *data;
 
 	int hsig, subhead = 0, mod_id, tdc_res, adc_res, nword;
@@ -294,7 +331,11 @@ int mdpp16_event(EVENT_HEADER *pheader, void *pevent)
 		if (flags == 0) {
 			if (evadcdata <= ENERGY_BINS && chan < MAX_CHAN) {
 				//printf("Adding entry for energy hit %i on channel : %i\n", evadcdata, chan);
+        ecal   = evadcdata * mdpp16_gains[chan] + mdpp16_offsets[chan];
+
 				ph_hist_mdpp[chan]->Fill(ph_hist_mdpp[chan],  (int)evadcdata,     1);
+        e_hist_mdpp[chan]->Fill(e_hist_mdpp[chan],  (int)ecal,     1);
+
         mdpp_event_count = mdpp_event_count + 1;
         #ifdef USE_REDIS
           write_pulse_height_event("mdpp16", chan, flags, 0, evadcdata); //, mdpp16_temporal_hist);

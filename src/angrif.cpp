@@ -24,7 +24,7 @@ int griffin(EVENT_HEADER *, void *);
 int griffin_init();
 int griffin_bor(INT run_number);
 int griffin_eor(INT run_number);
-void read_odb_gains();  int read_odb_histinfo();  int hist_init();
+void read_grif16_odb_gains();  int read_odb_histinfo();  int hist_init();
 float spread(int val){
   /* jonr: Apprently this is used to allow for easier rebinning, as this is an online
      analyzer that will not ever happen. Also RAND_MAX is library dependent and so
@@ -87,8 +87,8 @@ static short address_chan[MAX_ADDRESS];
 
 extern HNDLE hDB; // Odb Handle
 
-float gains[NUM_ODB_CHAN];
-float offsets[NUM_ODB_CHAN];
+float grif16_gains[NUM_ODB_CHAN];
+float grif16_offsets[NUM_ODB_CHAN];
 
 time_t last_update = time(NULL);
 static int addr_count_grif[MAX_CHAN + 1];// = {0};  // this will be used to calculate rates per channel
@@ -105,10 +105,10 @@ unsigned int grif16_temporal_hist[2048];
 int griffin_init()
 {
 	int i;
-	read_odb_gains();     // Print the loaded gains and offsets
-	fprintf(stdout,"\nRead Gain/Offset values from ODB\nIndex\tGain\tOffset\n");
+	read_grif16_odb_gains();     // Print the loaded gains and offsets
+	fprintf(stdout,"\nGRIF16: Read Gain/Offset values from ODB\nIndex\tGain\tOffset\n");
 	for(i=0; i<NUM_ODB_CHAN; i++) {
-		fprintf(stdout,"%d\t%f\t%f\n",i,gains[i],offsets[i]);
+		fprintf(stdout,"%d\t%f\t%f\n",i,grif16_gains[i],grif16_offsets[i]);
 	}
 	fprintf(stdout,"\n\n");
 
@@ -132,27 +132,27 @@ void dump_event(unsigned int *data, int len)
 	if( i % 6 ) { printf("\n   "); }
 }
 
-void read_odb_gains()
+void read_grif16_odb_gains()
 {
 	int status, size;
 	char tmp[STRING_LEN];
 	HNDLE hKey;
 
 	// readgains and offsets from ODB
-	sprintf(tmp,"/DAQ/MSC/gain");
+	sprintf(tmp,"/DAQ/MSC/grif16_gain");
 	if( (status=db_find_key(hDB, 0, tmp, &hKey)) != DB_SUCCESS) {
 		cm_msg(MINFO,"FE","Key %s not found", tmp); return;
 	}
-	size=sizeof(gains);
-	if( (db_get_data(hDB,hKey,&gains,&size,TID_FLOAT)) != DB_SUCCESS) {
+	size=sizeof(grif16_gains);
+	if( (db_get_data(hDB,hKey,&grif16_gains,&size,TID_FLOAT)) != DB_SUCCESS) {
 		cm_msg(MINFO,"FE","Can't get data for Key %s", tmp); return;
 	}
-	sprintf(tmp,"/DAQ/MSC/offset");
+	sprintf(tmp,"/DAQ/MSC/grif16_offset");
 	if( (status=db_find_key(hDB, 0, tmp, &hKey)) != DB_SUCCESS) {
 		cm_msg(MINFO,"FE","Key %s not found", tmp); return;
 	}
-	size=sizeof(offsets);
-	if( (db_get_data(hDB,hKey,&offsets,&size,TID_FLOAT)) != DB_SUCCESS) {
+	size=sizeof(grif16_offsets);
+	if( (db_get_data(hDB,hKey,&grif16_offsets,&size,TID_FLOAT)) != DB_SUCCESS) {
 		cm_msg(MINFO,"FE","Can't get data for Key %s", tmp); return;
 	}
 }
@@ -243,7 +243,7 @@ int griffin_bor(INT run_number)
 	printf("Starting RUN!!!\n");
 	bor_time = time(NULL);
 	start_time = -1;
-	read_odb_gains();
+	read_grif16_odb_gains();
 	Zero_Histograms();
 	//memset(rate_data, 0, sizeof(rate_data));
 	printf("Success!\n");
@@ -498,7 +498,7 @@ int process_decoded_fragment(Grif_event *ptr)
 	}
 	energy = ( ptr->integ == 0 ) ? 0 : ptr->energy/ptr->integ;
 	//ecal   = spread(energy) * gains[chan] + offsets[chan];
-	ecal   = energy * gains[chan] + offsets[chan];
+	ecal   = energy * grif16_gains[chan] + grif16_offsets[chan];
 	//++rate_data[chan];
 	ph_hist[chan]->Fill(ph_hist[chan],  (int)energy,     1);
 	hit_hist[3]->Fill(hit_hist[3],    chan,            1);
