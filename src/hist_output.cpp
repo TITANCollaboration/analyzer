@@ -61,7 +61,7 @@ void write_json_to_redis_queue(int time_diff) {
     try {
     redis.rpush("mdpp16:queue", {s.GetString()});
   } catch (const Error &e) {
-     printf("Could not write to REDIS server.\n");
+     //printf("Could not write to REDIS server.\n");
     // Error handling.
   }
 }

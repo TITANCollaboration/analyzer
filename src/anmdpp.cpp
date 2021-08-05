@@ -6,6 +6,7 @@
 #include <string.h>  /* memset */
 #include <stdint.h>
 #include <iostream>
+#include <fstream>
 #include <math.h>
 using namespace std;
 
@@ -37,7 +38,8 @@ using namespace std;
 
 #define NUM_ODB_CHAN     16 // size of msc table in odb
 #define MAX_SAMPLE_LEN  4096
-#define ENERGY_BINS    8192 /* 65536 131072 262144 */
+//#define ENERGY_BINS    65536/* 65536 131072 262144 */
+#define ENERGY_BINS    8192/* 65536 131072 262144 */
 #define NUM_CLOVER        16
 //#define MAX_CHAN        1024
 #define MAX_CHAN        16
@@ -115,6 +117,9 @@ TH1IHist *cfd_hist_mdpp[MAX_CHAN];
 void read_mdpp16_odb_gains();
 int hist_init_roody();
 int hist_mdpp_init();
+//std::ofstream mdpp_word_file("mdpp_word_output.txt");
+//std::ofstream mdpp_hit_file("mdpp_hit_output.txt");
+
 //---------------------------------------------------------------------
 
 int mdpp16_bor(INT run_number) {
@@ -250,7 +255,7 @@ int mdpp16_event(EVENT_HEADER *pheader, void *pevent)
 	uint32_t ts = 0, extts = 0; // needed for 30-bit ts
   uint64_t full_ts = 0;
 	int esig, counter;
-	int evadcdata = 0, evtdcdata, evrstdata, trigchan;
+	uint64_t evadcdata = 0, evtdcdata, evrstdata, trigchan;
 	static int evcount = 0;
 
 	/* Added these to give a time interval to accrue counts. Current bugs:
@@ -294,6 +299,11 @@ int mdpp16_event(EVENT_HEADER *pheader, void *pevent)
 	}
 
 	for (i = 1; i < bank_len; i++) { // covers both ADC and TDC event words
+/*    if(i == 1) {
+      mdpp_word_file << data[i];
+    } else {
+      mdpp_word_file << "," << data[i];
+    }*/
 		/* Highest 4 bits:
 		      0100 for header
 		      0001 for data event
@@ -303,7 +313,7 @@ int mdpp16_event(EVENT_HEADER *pheader, void *pevent)
 		dsig    = (data[i] >> 30) & 0x3;
     subhead = (data[i] >> 28) & 0x3;
 		// DATA word for TDC, ADC or reset event. 0b0001
-    if(data[i] == 4294967295) {
+    if((data[i] == 4294967295) || (data[i] == 0)) {
       continue;
     }
     if ( dsig == 3 ) {
@@ -318,7 +328,6 @@ int mdpp16_event(EVENT_HEADER *pheader, void *pevent)
 
 			if ( trigchan < MAX_CHAN ) { // ADC value caught
 				chan      = (data[i] >> 16) & 0x3F;
-				//printf("Channel : %i\n", chan);
 				evadcdata = (data[i] >> 0 ) & 0xFFFF;
 				++addr_count_mdpp[chan];
 			}
@@ -326,16 +335,18 @@ int mdpp16_event(EVENT_HEADER *pheader, void *pevent)
   }
   else if ( subhead == 2 ) {
     extts = (data[i] >> 0) & 0xFFFF;
+    continue;
 	}
 		// EOE marker, event counter / timestamp. If dsig == 0b11, ts caught
 		if (flags == 0) {
-			if (evadcdata <= ENERGY_BINS && chan < MAX_CHAN) {
+			if (evadcdata <= ADC_CHAN && chan < MAX_CHAN) {
 				//printf("Adding entry for energy hit %i on channel : %i\n", evadcdata, chan);
+        evadcdata = evadcdata/8;
         ecal   = evadcdata * mdpp16_gains[chan] + mdpp16_offsets[chan];
 
 				ph_hist_mdpp[chan]->Fill(ph_hist_mdpp[chan],  (int)evadcdata,     1);
         e_hist_mdpp[chan]->Fill(e_hist_mdpp[chan],  (int)ecal,     1);
-
+        //mdpp_hit_file << trigchan << "," << chan << "," << flags << "," << (int)evadcdata << "\n";
         mdpp_event_count = mdpp_event_count + 1;
         #ifdef USE_REDIS
           write_pulse_height_event("mdpp16", chan, flags, 0, evadcdata); //, mdpp16_temporal_hist);
@@ -343,6 +354,7 @@ int mdpp16_event(EVENT_HEADER *pheader, void *pevent)
 			}
 		}
 	} // End of for loop
+//  mdpp_word_file << "\n";
   mdpp16_tdc_last_time = ts + (extts * pow(2, 30));
   //cout << "TDC Timestamp low: " << ts << "high: " << extts <<  "- Full: " << mdpp16_tdc_last_time << "\n";
 	esig    = (data[i] >> 30) & 0x3;

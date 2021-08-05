@@ -140,7 +140,7 @@ void read_ebit_parameter(int run_number) {
 
     const auto p1 = std::chrono::system_clock::now();
     current_unix_timestamp = std::chrono::duration_cast<std::chrono::milliseconds>(p1.time_since_epoch()).count();
-    cout << "Recieved message:" << incoming_msg.str() << "\n";
+    //cout << "Recieved message:" << incoming_msg.str() << "\n";
 
     //const char* json = incoming_msg.str().c_str(); // !!Uncomment me after testing
     const char* json = "{\"command\": \"new_cycle\", \"cycle_number\": 12, \"run_number\": 113 , \"scan_settings\": {\"EPICS\": [{\"demand_dev\": \"EBIT:DT7E5PL:VOL\", \"demand_val\": 100.0, \"human_name\": \"Drift tube 5 - PL\", \"measured_dev\":\"EBIT:DT7E5PL:RDVOL\", \"measured_val\": 99.97}],\"FC0InOut\": null,\"PPG\": []},\"timestamp\": 1624392506385}";
