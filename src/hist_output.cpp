@@ -60,6 +60,7 @@ void write_json_to_redis_queue(int time_diff) {
   //  if(mdpp16_temporal_hist[chan_num][hist_bin] != 0) {
     try {
     redis.rpush("mdpp16:queue", {s.GetString()});
+    //redis.expire("unix_ts_ms", seconds(1000));
   } catch (const Error &e) {
      //printf("Could not write to REDIS server.\n");
     // Error handling.

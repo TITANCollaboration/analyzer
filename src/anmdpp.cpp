@@ -249,7 +249,6 @@ int mdpp16_event(EVENT_HEADER *pheader, void *pevent)
 	   something something...  */
 	int i, ecal = 0, bank_len, err = 0;
 	DWORD *data;
-
 	int hsig, subhead = 0, mod_id, tdc_res, adc_res, nword;
 	int dsig = 0, flags = 0, t, chan = 100, evdata;
 	uint32_t ts = 0, extts = 0; // needed for 30-bit ts
@@ -273,7 +272,6 @@ int mdpp16_event(EVENT_HEADER *pheader, void *pevent)
 		last_update_mdpp = curr_time;
 	}
 	if ( (bank_len = bk_locate(pevent, "MDPP", &data) ) == 0 ) { return (0); }
-	//printf("Bank Length : %i\n", bank_len);
 	++evcount;
 	debug = 0;
 	if ( debug ) {
@@ -297,9 +295,10 @@ int mdpp16_event(EVENT_HEADER *pheader, void *pevent)
 		printf("   hsig  =%d    subheader=%d    mod_id=%d\n", hsig, subhead, mod_id);
 		printf("   tdc_res=%d    adc_res=%d    nword=%d\n", tdc_res, adc_res, nword);
 	}
-
-	for (i = 1; i < bank_len; i++) { // covers both ADC and TDC event words
-/*    if(i == 1) {
+  //printf("------------ Bank Len %i\n", bank_len);
+	for (i = 0; i < bank_len; i++) { // covers both ADC and TDC event words
+    evadcdata = 0;
+/*    if(i == 0) {
       mdpp_word_file << data[i];
     } else {
       mdpp_word_file << "," << data[i];
@@ -330,31 +329,34 @@ int mdpp16_event(EVENT_HEADER *pheader, void *pevent)
 				chan      = (data[i] >> 16) & 0x3F;
 				evadcdata = (data[i] >> 0 ) & 0xFFFF;
 				++addr_count_mdpp[chan];
-			}
-		// Extended timestamp word. If dsig+fix==0010, ext ts caught
-  }
-  else if ( subhead == 2 ) {
-    extts = (data[i] >> 0) & 0xFFFF;
-    continue;
-	}
-		// EOE marker, event counter / timestamp. If dsig == 0b11, ts caught
-		if (flags == 0) {
-			if (evadcdata <= ADC_CHAN && chan < MAX_CHAN) {
-				//printf("Adding entry for energy hit %i on channel : %i\n", evadcdata, chan);
-        evadcdata = evadcdata/8;
-        ecal   = evadcdata * mdpp16_gains[chan] + mdpp16_offsets[chan];
 
-				ph_hist_mdpp[chan]->Fill(ph_hist_mdpp[chan],  (int)evadcdata,     1);
-        e_hist_mdpp[chan]->Fill(e_hist_mdpp[chan],  (int)ecal,     1);
-        //mdpp_hit_file << trigchan << "," << chan << "," << flags << "," << (int)evadcdata << "\n";
-        mdpp_event_count = mdpp_event_count + 1;
-        #ifdef USE_REDIS
-          write_pulse_height_event("mdpp16", chan, flags, 0, evadcdata); //, mdpp16_temporal_hist);
-        #endif
-			}
-		}
+        if (flags == 0 && evadcdata <= ADC_CHAN && chan < MAX_CHAN) {
+            //printf("Adding entry for energy hit %i on channel : %i\n", evadcdata, chan);
+
+            evadcdata = evadcdata/8;
+            ecal   = evadcdata * mdpp16_gains[chan] + mdpp16_offsets[chan];
+
+            ph_hist_mdpp[chan]->Fill(ph_hist_mdpp[chan],  (int)evadcdata,     1);
+            e_hist_mdpp[chan]->Fill(e_hist_mdpp[chan],  (int)ecal,     1);
+            //mdpp_hit_file << trigchan << "," << chan << "," << flags << "," << (int)evadcdata << "\n";
+
+            mdpp_event_count = mdpp_event_count + 1;
+            #ifdef USE_REDIS
+              write_pulse_height_event("mdpp16", chan, flags, 0, evadcdata); //, mdpp16_temporal_hist);
+            #endif
+        };
+			} else {
+        continue;
+      }
+		// Extended timestamp word. If dsig+fix==0010, ext ts caught
+    }
+    else if ( subhead == 2 ) {
+      extts = (data[i] >> 0) & 0xFFFF;
+      continue;
+	  }
 	} // End of for loop
-//  mdpp_word_file << "\n";
+  //mdpp_word_file << "\n";
+
   mdpp16_tdc_last_time = ts + (extts * pow(2, 30));
   //cout << "TDC Timestamp low: " << ts << "high: " << extts <<  "- Full: " << mdpp16_tdc_last_time << "\n";
 	esig    = (data[i] >> 30) & 0x3;
