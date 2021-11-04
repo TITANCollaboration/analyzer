@@ -5,6 +5,7 @@
 #define FILE_BUFSIZ    1048576 // 64k * 4 * 4 [1M]
 
 #define FLOAT_1D             1
+#define HIST_2D_TIME 60*5
 
 typedef struct TH1IHist_struct TH1IHist;
 

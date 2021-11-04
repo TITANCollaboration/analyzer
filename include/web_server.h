@@ -24,3 +24,5 @@ void load_spec_table_from_ODB();
 int GetIDfromAddress(int address);
 int GetIDfromName(const char* name);
 void decodeurl(char *dst, const char *src);
+int send_2d_hist(int num, int fd);
+int send_2d_sum_hist(int num, int fd);

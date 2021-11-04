@@ -8,7 +8,7 @@ int write_pulse_height_event(std::string daq_prefix, int daq_chan, int flags, ui
   //int chan;
   if(daq_prefix == "mdpp16") {
     if(pause_for_change == 0) {
-      mdpp16_temporal_hist[daq_chan][evadcdata]++;
+      mdpp16_temporal_hist_slice[daq_chan][evadcdata]++;
     }
   //  if(daq_chan == 4) {
     //  cout << "Chan4: " << evadcdata << '\n';
@@ -54,4 +54,13 @@ int report_counts(int interval, std::string daq_prefix, int MAX_CHANNELS, int ad
 #endif
 	//memset(addr_count, 0, sizeof(addr_count) );
 	return (0);
+}
+
+void print_vector() {
+  cout << "Slice of time..";
+  for(int i; i <= sizeof(mdpp16_2d_time_hist); i++){
+    for(int j; j  <= sizeof(mdpp16_2d_time_hist[i]); j++){
+    cout << mdpp16_2d_time_hist[i][j]<< ",";
+     }
+  }
 }

@@ -1,5 +1,6 @@
 /* test web server: gcc -g -o server_basic web_server.c */
 /* new js fn similar to odbget - will have to decode args in server.c */
+#include <vector>
 
 #include <stdio.h>
 #include <sys/select.h> /* select(), FD_SET() etc */
@@ -11,8 +12,12 @@
 #include <ctype.h>      // isxdigit(), isspace()
 #include <signal.h>
 #include "web_server.h"
-
+#include "common.h"
 #include "histogram.h"
+#include "rapidjson/writer.h"
+#include "rapidjson/stringbuffer.h"
+
+using namespace rapidjson;
 
 #define MAXSPECNAMES 16
 
@@ -32,6 +37,9 @@ char *histo_list[MAXSPECNAMES];
 #define ODBAGET      5 /* command 5 */
 #define ODBAMGET     6 /* command 6 */
 #define CALLSPECHANDLER  7 /* command 7 */
+#define MDPP16_2D_HIST_CALL 8 /* command 8 */
+#define MDPP16_2D_SUM_HIST_CALL 9 /* command 8 */
+
 
 int send_spectrum_list(int fd);
 int send_spectrum(int num, int fd);
@@ -105,9 +113,12 @@ int handle_connection(int fd)
 		send_spectrum_list(fd); return (0);
 	case CALLSPECHANDLER: //printf("CMD: Get %d spec from Handler\n", arg);
 		send_spectrum(arg, fd); return (0);
+  case MDPP16_2D_HIST_CALL:
+    send_2d_hist(arg, fd); return(0);
+  case MDPP16_2D_SUM_HIST_CALL:
+      send_2d_sum_hist(arg, fd); return(0);
 	case NO_COMMAND:     // printf("No command received.\n");
 		sprintf(filename, "%s%s", ROOTDIR, url);
-		printf("Getting NO COMMAND?\n");
 		if ( send_file(filename, fd) < 0 ) { return (-1); }
 	}
 	return (0);
@@ -127,6 +138,12 @@ int parse_url(int fd, int *cmd, int *arg)
 	if ( strncmp(ptr, "cmd=getSpectrumList", 18) == 0 ) { /* list spectra */
 		*cmd = SPECLIST; return (3);
 	}
+  if ( strncmp(ptr, "cmd=getTimeSpec", 14) == 0 ) { /* list spectra */
+    *cmd = MDPP16_2D_HIST_CALL; return (3);
+  }
+  if ( strncmp(ptr, "cmd=getTimeSumSpec", 17) == 0 ) { /* list spectra */
+    *cmd = MDPP16_2D_SUM_HIST_CALL; return (3);
+  }
 	if ( strncmp(ptr, "cmd=callspechandler", 18) == 0 ) {
 		// loop over list to get names - insert nulls in place of &'s to terminate
 		for (i = 0; i < MAXSPECNAMES; i++) {
@@ -172,6 +189,73 @@ int send_spectrum_list(int fd)
 #define HIST_HDR "{"  // 1
 #define HIST_SEP ", " // 2
 #define HIST_TRL "}"  // 1
+
+int send_2d_hist(int num, int fd)
+{
+  //mdpp16_2d_time_hist
+  //printf("Got to 2d_hist func\n");
+  StringBuffer s;
+  unsigned time_slice = 0;
+  unsigned hist_bin = 0;
+  Writer<StringBuffer> writer(s);
+  writer.StartObject();               // Between StartObject()/EndObject(),
+  printf("Got here!\n");
+  writer.Key("hist");
+  writer.StartArray();                // Between StartArray()/EndArray(),
+  //printf("Size of mdpp16_2d_time_hist.size() : %i\n", mdpp16_2d_time_hist.size());
+  //printf("Size of mdpp16_2d_time_hist[0].size() : %i\n", mdpp16_2d_time_hist[0].size());
+  for (time_slice = 0; time_slice < sizeof(mdpp16_2d_time_hist); time_slice++) {
+      cout << "Slice of time..";
+      for(int i; i <= sizeof(mdpp16_2d_time_hist); i++){
+        for(int j; j  <= sizeof(mdpp16_2d_time_hist[i]); j++){
+        cout << mdpp16_2d_time_hist[i][j]<< ",";
+         }
+      }
+      cout <<"\n";
+      writer.StartArray();                // Between StartArray()/EndArray(),
+      for (hist_bin = 0; hist_bin < sizeof(mdpp16_2d_time_hist[0]); hist_bin++) {
+          writer.Uint(mdpp16_2d_time_hist[time_slice][hist_bin]);                 // all values are elements of the array.
+      }
+      writer.EndArray();
+  }
+  writer.EndArray();
+  writer.EndObject();
+  put_line(fd, const_cast<char *>(s.GetString()), s.GetSize() );
+  return(0);
+}
+
+int send_2d_sum_hist(int num, int fd)
+{
+  //mdpp16_2d_time_hist
+  //printf("Got to 2d_hist func\n");
+  StringBuffer s;
+  unsigned time_slice = 0;
+  unsigned hist_bin = 0;
+  unsigned int hit_count_per_time_slice = 0;
+  Writer<StringBuffer> writer(s);
+  writer.StartObject();               // Between StartObject()/EndObject(),
+
+  writer.Key("hist_sum");
+  writer.StartArray();                // Between StartArray()/EndArray(),
+  //printf("Size of mdpp16_2d_time_hist.size() : %i\n", mdpp16_2d_time_hist.size());
+  //printf("Size of mdpp16_2d_time_hist[0].size() : %i\n", mdpp16_2d_time_hist[0].size());
+//mdpp16_2d_time_hist
+  for (time_slice = 0; time_slice < mdpp16_2d_time_hist.size(); time_slice++) {
+      //writer.StartArray();               // Between StartArray()/EndArray(),
+      hit_count_per_time_slice = 0;
+      for (hist_bin = 0; hist_bin < mdpp16_2d_time_hist[0].size(); hist_bin++) {
+        hit_count_per_time_slice = hit_count_per_time_slice + mdpp16_2d_time_hist[time_slice][hist_bin];
+      }
+      writer.Uint(hit_count_per_time_slice);                 // all values are elements of the array.
+
+      //writer.EndArray();
+  }
+  writer.EndArray();
+  writer.EndObject();
+
+  put_line(fd, const_cast<char *>(s.GetString()), s.GetSize() );
+  return(0);
+}
 
 int send_spectrum(int num, int fd)
 {

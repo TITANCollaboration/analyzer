@@ -39,7 +39,7 @@ using namespace std;
 #define NUM_ODB_CHAN     16 // size of msc table in odb
 #define MAX_SAMPLE_LEN  4096
 //#define ENERGY_BINS    65536/* 65536 131072 262144 */
-#define ENERGY_BINS    8192/* 65536 131072 262144 */
+#define ENERGY_BINS     32768 // 8192/* 65536 131072 262144 */
 #define NUM_CLOVER        16
 //#define MAX_CHAN        1024
 #define MAX_CHAN        16
@@ -333,7 +333,7 @@ int mdpp16_event(EVENT_HEADER *pheader, void *pevent)
         if (flags == 0 && evadcdata <= ADC_CHAN && chan < MAX_CHAN) {
             //printf("Adding entry for energy hit %i on channel : %i\n", evadcdata, chan);
 
-            evadcdata = evadcdata/8;
+            evadcdata = evadcdata/2;
             ecal   = evadcdata * mdpp16_gains[chan] + mdpp16_offsets[chan];
 
             ph_hist_mdpp[chan]->Fill(ph_hist_mdpp[chan],  (int)evadcdata,     1);

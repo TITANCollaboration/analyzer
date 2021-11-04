@@ -2,7 +2,7 @@
 #include <string.h>
 #include <time.h>
 #include <pthread.h>
-#include "common.h"
+// #include "common.h"
 #include "midas.h"
 #include "web_server.h"
 #include "hist_output.h"
@@ -15,8 +15,15 @@
 #undef USE_INFLUXDB
 extern ANA_MODULE griffin_module;
 extern ANA_MODULE mdpp16_module;
+#define HIST_SIZE 8192
+#define MDPP_CHAN_NUM 16  
+unsigned int mdpp16_temporal_hist_slice[MDPP_CHAN_NUM][HIST_SIZE] = {};
 
-unsigned int mdpp16_temporal_hist[MDPP_CHAN_NUM][HIST_SIZE] = {};
+//unsigned  int (*mdpp16_2d_time_hist)[3000];
+//mdpp16_2d_time_hist = malloc(sizeof *mdpp16_2d_time_hist * 8192);
+
+std::vector<std::vector<unsigned int> > mdpp16_2d_time_hist(HIST_2D_TIME, std::vector<unsigned int>(HIST_2D_BIN_COUNT, 0));
+
 unsigned int mytimer_thread_termination = 0;
 unsigned int ebit_ppg_reader_thread_termination = 0;
 uint64_t mdpp16_tdc_last_time = 0;
@@ -111,10 +118,10 @@ INT ana_begin_of_run(INT run_number, char *error){
 
   mytimer_thread_termination = 0;
   ebit_ppg_reader_thread_termination = 0;
-  #ifdef USE_REDIS
-      long redis_output_timing = 100;  // milliseconds
-      pthread_create(&timer_thread, NULL, (void* (*)(void*))hist_timer, (void*) redis_output_timing);
-  #endif
+//  #ifdef USE_REDIS
+  long redis_output_timing = 1000;  // milliseconds
+  pthread_create(&timer_thread, NULL, (void* (*)(void*))hist_timer, (void*) redis_output_timing);
+  //#endif
     // Testing this!
     pthread_create(&ebit_ppg_reader_thread, NULL, (void* (*)(void*))read_ebit_parameter, (void*) run_number);
   return CM_SUCCESS;
@@ -123,10 +130,10 @@ INT ana_end_of_run(INT run_number, char *error){
   //root_file->Write();
   //root_file->Close();
   void *thread_status_ppg, *thread_status_redis;
-  #ifdef USE_REDIS
-      mytimer_thread_termination = 1;
-      pthread_join(timer_thread, &thread_status_redis);
-  #endif
+  //#ifdef USE_REDIS
+  mytimer_thread_termination = 1;
+  pthread_join(timer_thread, &thread_status_redis);
+  //#endif
 
   ebit_ppg_reader_thread_termination = 1;
   pthread_join(ebit_ppg_reader_thread, &thread_status_ppg);
