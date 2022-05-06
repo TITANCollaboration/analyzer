@@ -205,12 +205,7 @@ int send_2d_hist(int num, int fd)
   //printf("Size of mdpp16_2d_time_hist.size() : %i\n", mdpp16_2d_time_hist.size());
   //printf("Size of mdpp16_2d_time_hist[0].size() : %i\n", mdpp16_2d_time_hist[0].size());
   for (time_slice = 0; time_slice < sizeof(mdpp16_2d_time_hist); time_slice++) {
-      cout << "Slice of time..";
-      for(int i; i <= sizeof(mdpp16_2d_time_hist); i++){
-        for(int j; j  <= sizeof(mdpp16_2d_time_hist[i]); j++){
-        cout << mdpp16_2d_time_hist[i][j]<< ",";
-         }
-      }
+
       cout <<"\n";
       writer.StartArray();                // Between StartArray()/EndArray(),
       for (hist_bin = 0; hist_bin < sizeof(mdpp16_2d_time_hist[0]); hist_bin++) {
