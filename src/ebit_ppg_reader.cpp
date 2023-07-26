@@ -71,7 +71,7 @@ void write_csv_data(std::ofstream& run_csv_file, const char* json, uint64_t curr
   ppg_data.Parse(json);  // Parse the JSON, should be ?result?
   // cout << "My Json: " << json <<"\n";
   Value& ppg_command = ppg_data["command"];
-  Value* ppg_dt5_value;
+  Value* ppg_bias_value;
   if(ppg_data["command"] != "new_cycle") {
     return;
   }
@@ -80,16 +80,16 @@ void write_csv_data(std::ofstream& run_csv_file, const char* json, uint64_t curr
 
   assert(ppg_scan_settings.IsArray());
   for (auto& epics_array : ppg_scan_settings.GetArray()) {  // Loop through EPICS list until we get the DT5 value
-    if(epics_array["demand_dev"] == "EBIT:DT7E5PL:VOL") {
-      ppg_dt5_value = &epics_array["measured_val"];
-      std::cout<<"YO "<<ppg_dt5_value;
-      egun_voltage = ppg_dt5_value->GetDouble();
+    if(epics_array["demand_dev"] == "EBIT:BIAS:VOL") {
+      ppg_bias_value = &epics_array["measured_val"];
+
+      egun_voltage = ppg_bias_value->GetDouble();
     }
   }
 
   run_csv_file << ppg_unix_timestamp.GetUint64() << ","
                << ppg_command.GetString() << ","
-               << "EBIT:DT7E5PL:VOL" << ","
+               << "EBIT:BIAS:VOL" << ","
                << egun_voltage << ","
                << mdpp16_tdc_last_time << ","
                << grif16_tdc_last_time << ","
@@ -144,7 +144,7 @@ void read_ebit_parameter(int run_number) {
     //cout << "Recieved message:" << incoming_msg.str() << "\n";
 
     //const char* json = incoming_msg.str().c_str(); // !!Uncomment me after testing
-    const char* json = "{\"command\": \"new_cycle\", \"cycle_number\": 12, \"run_number\": 113 , \"scan_settings\": {\"EPICS\": [{\"demand_dev\": \"EBIT:DT7E5PL:VOL\", \"demand_val\": 100.0, \"human_name\": \"Drift tube 5 - PL\", \"measured_dev\":\"EBIT:DT7E5PL:RDVOL\", \"measured_val\": 99.97}],\"FC0InOut\": null,\"PPG\": []},\"timestamp\": 1624392506385}";
+    const char* json = "{\"command\": \"new_cycle\", \"cycle_number\": 12, \"run_number\": 113 , \"scan_settings\": {\"EPICS\": [{\"demand_dev\": \"EBIT:BIAS:VOL\", \"demand_val\": 100.0, \"human_name\": \"Drift tube 5 - PL\", \"measured_dev\":\"EBIT:BIAS:RDVOL\", \"measured_val\": 99.97}],\"FC0InOut\": null,\"PPG\": []},\"timestamp\": 1624392506385}";
 
     // cout << json << "\n";
     const char* new_json = add_to_json(json, current_unix_timestamp);
