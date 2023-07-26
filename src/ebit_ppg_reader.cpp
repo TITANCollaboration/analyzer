@@ -82,6 +82,7 @@ void write_csv_data(std::ofstream& run_csv_file, const char* json, uint64_t curr
   for (auto& epics_array : ppg_scan_settings.GetArray()) {  // Loop through EPICS list until we get the DT5 value
     if(epics_array["demand_dev"] == "EBIT:DT7E5PL:VOL") {
       ppg_dt5_value = &epics_array["measured_val"];
+      std::cout<<"YO "<<ppg_dt5_value;
       egun_voltage = ppg_dt5_value->GetDouble();
     }
   }

@@ -333,7 +333,7 @@ int mdpp16_event(EVENT_HEADER *pheader, void *pevent)
         if (flags == 0 && evadcdata <= ADC_CHAN && chan < MAX_CHAN) {
             //printf("Adding entry for energy hit %i on channel : %i\n", evadcdata, chan);
 
-            evadcdata = evadcdata/2;
+            evadcdata = evadcdata/2; //note to self: here is the online analyzer's factor of 2 bin size.
             ecal   = evadcdata * mdpp16_gains[chan] + mdpp16_offsets[chan];
 
             ph_hist_mdpp[chan]->Fill(ph_hist_mdpp[chan],  (int)evadcdata,     1);
