@@ -6,6 +6,7 @@
 #include <string.h>  /* memset */
 #include <stdint.h>
 #include <iostream>
+#include <random>
 #include <fstream>
 #include <math.h>
 using namespace std;
@@ -40,6 +41,7 @@ using namespace std;
 #define MAX_SAMPLE_LEN  4096
 //#define ENERGY_BINS    65536/* 65536 131072 262144 */
 #define ENERGY_BINS     32768 // 8192/* 65536 131072 262144 */
+#define TEST_BINS		64
 #define NUM_CLOVER        16
 //#define MAX_CHAN        1024
 #define MAX_CHAN        16
@@ -211,6 +213,24 @@ int hist_mdpp_init()
 	char sum_names[N_SUM][32] = {"el_sum", "eh_sum", "a_sum", "p_sum", "l_sum"};
 	char title[STRING_LEN], handle[STRING_LEN];
 	int i;
+
+	// Adding the labels for the dummy data
+	TH1IHist *test_hist; 
+	test_hist = H1_BOOK("1", "TEST", TEST_BINS, 0, TEST_BINS);
+
+	// Generating random numbers for the test histogram
+	// Create a random number generator engine
+    std::random_device rd;  // Initialize with a hardware entropy source if available
+    std::mt19937 mt(rd());  // Mersenne Twister pseudo-random number generator
+
+    // Define a distribution (e.g., for integers between 1 and 50)
+    std::uniform_int_distribution<int> dist(1, 50);
+
+	for(int i=0; i<1000; i++) {
+		int random_number = dist(mt); // Generate the random number
+    	test_hist->Fill(test_hist, random_number, 1);
+	}
+
 	for (i = 0; i < MAX_CHAN; i++) { // Create each histogram for this channel
 
 		sprintf(chan_name[i], "mdpp16_%i", i);
