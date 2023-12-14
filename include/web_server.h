@@ -1,5 +1,5 @@
 #define WEBPORT                         9093
-#define ROOTDIR "/home/ebit/daq/analyser"
+#define ROOTDIR "/zssd/titan/decayspec/midas_decayspec/daq/decayspec_analyzer"
 // was used to send css or js files
 
 #define MAXLEN      1024 // maximum url and other string lengths
@@ -20,6 +20,7 @@ int send_header(int fd, int type);
 int send_file(char *filename, int fd);
 int send_spectrum_list(int fd);
 int send_spectrum_from_handler(int num, int fd);
+int send_2d_spectrum(int num, int fd);
 void load_spec_table_from_ODB();
 int GetIDfromAddress(int address);
 int GetIDfromName(const char* name);

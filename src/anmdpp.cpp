@@ -13,6 +13,7 @@ using namespace std;
 
 #include "midas.h"
 #include "histogram.h"
+#include "histogram2.h"
 #include "web_server.h"
 #include "experim.h"
 
@@ -22,7 +23,9 @@ using namespace std;
 #include "TH1D.h"
 #include "TH1F.h"
 #include "TFile.h"
+#include "TROOT.h"
 */
+
 #include "common.h"
 
 
@@ -42,6 +45,7 @@ using namespace std;
 //#define ENERGY_BINS    65536/* 65536 131072 262144 */
 #define ENERGY_BINS     32768 // 8192/* 65536 131072 262144 */
 #define TEST_BINS		64
+#define TEST_2d_BINS	400
 #define NUM_CLOVER        16
 //#define MAX_CHAN        1024
 #define MAX_CHAN        16
@@ -214,9 +218,9 @@ int hist_mdpp_init()
 	char title[STRING_LEN], handle[STRING_LEN];
 	int i;
 
-	// Adding the labels for the dummy data
+	// Adding the labels for the dummy 1d data
 	TH1IHist *test_hist; 
-	test_hist = H1_BOOK("1", "TEST", TEST_BINS, 0, TEST_BINS);
+	test_hist = H1_BOOK("test_handle", "test_chan", TEST_BINS, 0, TEST_BINS);
 
 	// Generating random numbers for the test histogram
 	// Create a random number generator engine
@@ -230,6 +234,17 @@ int hist_mdpp_init()
 		int random_number = dist(mt); // Generate the random number
     	test_hist->Fill(test_hist, random_number, 1);
 	}
+
+	// Adding the labels for the dummy 2d data
+	TH2IHist *test_2d_hist;
+	int rowl = 20;
+	test_2d_hist = H2_BOOK("test_2d_handle", "test_2d_chan", TEST_2d_BINS, rowl, TEST_2d_BINS);
+	
+	for(int i=0; i<1000; i++) {
+	        int rand_x = rand() % rowl; // Generate the random number for x axis
+		int rand_y = rand() % (TEST_2d_BINS / rowl); // Generate the random number for y axis
+		test_2d_hist->Fill(test_2d_hist, rand_x, rand_y, 1);
+        }	
 
 	for (i = 0; i < MAX_CHAN; i++) { // Create each histogram for this channel
 

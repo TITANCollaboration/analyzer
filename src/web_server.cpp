@@ -14,6 +14,7 @@
 #include "web_server.h"
 #include "common.h"
 #include "histogram.h"
+#include "histogram2.h"
 #include "rapidjson/writer.h"
 #include "rapidjson/stringbuffer.h"
 
@@ -27,6 +28,7 @@ static char content_types[][32] = {
 	"text/html", "text/css", "text/javascript", "application/json"
 };
 char *histo_list[MAXSPECNAMES];
+char *histo_2d_list[MAXSPECNAMES];
 
 #define MORE_FOLLOWS 1
 #define NO_COMMAND   0 /* command 0 */
@@ -107,16 +109,19 @@ int handle_connection(int fd)
 	if ( request_count > 1 ) {
 		if ( send_header(fd, content_type)              < 0 ) { return (-1); }
 	}
+	printf("Command number: %i\n", command);
 	switch (command) {
 	// curl "http://titan01.triumf.ca:9093/?cmd=callspechandler&spectrum1=spec1&spectrum2=spec2"
 	case SPECLIST:       // fprintf(stdout,"COMMAND: List\n"       );
 		send_spectrum_list(fd); return (0);
 	case CALLSPECHANDLER: //printf("CMD: Get %d spec from Handler\n", arg);
 		send_spectrum(arg, fd); return (0);
-  case MDPP16_2D_HIST_CALL:
-    send_2d_hist(arg, fd); return(0);
-  case MDPP16_2D_SUM_HIST_CALL:
-      send_2d_sum_hist(arg, fd); return(0);
+	case GETSPEC2D: //2d spectra
+		send_2d_spectrum(arg, fd); return (0);
+    case MDPP16_2D_HIST_CALL:
+        send_2d_hist(arg, fd); return(0);
+    case MDPP16_2D_SUM_HIST_CALL:
+        send_2d_sum_hist(arg, fd); return(0);
 	case NO_COMMAND:     // printf("No command received.\n");
 		sprintf(filename, "%s%s", ROOTDIR, url);
 		if ( send_file(filename, fd) < 0 ) { return (-1); }
@@ -144,6 +149,7 @@ int parse_url(int fd, int *cmd, int *arg)
   if ( strncmp(ptr, "cmd=getTimeSumSpec", 17) == 0 ) { /* list spectra */
     *cmd = MDPP16_2D_SUM_HIST_CALL; return (3);
   }
+	// case for 1d spectra
 	if ( strncmp(ptr, "cmd=callspechandler", 18) == 0 ) {
 		// loop over list to get names - insert nulls in place of &'s to terminate
 		for (i = 0; i < MAXSPECNAMES; i++) {
@@ -151,12 +157,30 @@ int parse_url(int fd, int *cmd, int *arg)
 			*ptr = '\0'; ++ptr; // terminate previous name (if i>0 )
 			ptr = strstr(ptr, "="); ++ptr; // skip over number, and '='
 			histo_list[i] = ptr;
-		}
+			printf("hist %i: %s\n", i, histo_list[i]);
+		}		
 		if ( i == 0 ) {
 			fprintf(stderr, "can't read any spectrum requests in %s\n", url);
 			return (-1);
 		}
 		*arg = i;  *cmd = CALLSPECHANDLER; return (3);
+	}
+	// case for 2d spectra
+	if ( strncmp(ptr, "cmd=call2dspechandler", 18) == 0 ) {
+		// loop over list to get names - insert nulls in place of &'s to terminate
+		for (i = 0; i < MAXSPECNAMES; i++) {
+			if ( (ptr = strstr(ptr, "&spectrum")) == NULL ) {  break; }
+			*ptr = '\0'; ++ptr; // terminate previous name (if i>0 )
+			ptr = strstr(ptr, "="); ++ptr; // skip over number, and '='
+			histo_2d_list[i] = ptr;
+			printf("hist 2d%i: %s\n", i, histo_2d_list[i]);
+		}
+		
+		if ( i == 0 ) {
+			fprintf(stderr, "can't read any spectrum requests in %s\n", url);
+			return (-1);
+		}
+		*arg = i;  *cmd = GETSPEC2D; return (3);
 	}
 	*cmd = NO_COMMAND;
 	if ( strncmp(url + strlen(url) - 4, ".css", 4) == 0 ) { return (1); }
@@ -215,7 +239,7 @@ int send_2d_hist(int num, int fd)
   }
   writer.EndArray();
   writer.EndObject();
-  put_line(fd, const_cast<char *>(s.GetString()), s.GetSize() );
+  put_line(fd, const_cast<char *>(s.GetString()), s.GetSize() );  
   return(0);
 }
 
@@ -255,20 +279,53 @@ int send_2d_sum_hist(int num, int fd)
 int send_spectrum(int num, int fd)
 {
 	int i, j;  char temp[256];
+	//char output[1000] = {};
 	TH1IHist *hist;
-	//printf("Send Spectrium : Num : %i, FD : %i\n", num, fd);
+	printf("Send Spectrum : Num : %i, FD : %i\n", num, fd);
 	put_line(fd, HIST_HDR, strlen(HIST_HDR) );
 	for (j = 0; j < num; j++) {
-		//printf("hist_list : %s", histo_list[j]);
-		if ( j > 0 ) { put_line(fd, HIST_SEP, strlen(HIST_SEP) ); }
-		if ( (hist = hist_querytitle(histo_list[j])) == NULL ) { // don't have it
-			sprintf(temp, "\'%s\':NULL", histo_list[j] );
+		if ( j > 0 ) {
+		        put_line(fd, HIST_SEP, strlen(HIST_SEP) );
+		}
+		hist = hist_querytitle(histo_list[j]);
+		if (!hist) { // don't have it
+		        sprintf(temp, "\'%s\':NULL", histo_list[j] );
+		        put_line(fd, temp, strlen(temp) );
+		} else { // do have this - send contents
+		        sprintf(temp, "\'%s\':[", histo_list[j] );
+		        put_line(fd, temp, strlen(temp) );
+		        for (i = 0; i < hist->valid_bins; i++) {
+		                if ( i > 0) { put_line(fd, ",", 1 ); }
+		                sprintf(temp, "%d", (int)hist->data[i] );
+		        if ( put_line(fd, temp, strlen(temp))) { return (-1); }
+		  }
+		  put_line(fd, "]", 1 );
+		}
+	}
+	put_line(fd, HIST_TRL, strlen(HIST_TRL) );
+	return (0);
+}
+
+int send_2d_spectrum(int num, int fd)
+{
+	int i, j;  char temp[256];
+	TH2IHist *hist;
+	printf("Send 2d Spectrum : Num : %i, FD : %i\n", num, fd);
+	put_line(fd, HIST_HDR, strlen(HIST_HDR) );
+	for (j = 0; j < num; j++) {
+		if ( j > 0 ) {
+		        put_line(fd, HIST_SEP, strlen(HIST_SEP) );
+		}
+		if ( (hist = hist2_querytitle(histo_2d_list[j])) == NULL ) { // don't have it
+			sprintf(temp, "\'%s\':NULL", histo_2d_list[j] );
 			put_line(fd, temp, strlen(temp) );
 		} else {                               // do have this - send contents
-			sprintf(temp, "\'%s\':[", histo_list[j] );
+			sprintf(temp, "\'%s\':[", histo_2d_list[j] );
 			put_line(fd, temp, strlen(temp) );
+			sprintf(temp, "%d", (int)hist->rowl); //The first value is the row length for 2d spectra
+			put_line(fd, temp, strlen(temp));
 			for (i = 0; i < hist->valid_bins; i++) {
-				if ( i > 0) { put_line(fd, ",", 1 ); }
+				put_line(fd, ",", 1 );
 				sprintf(temp, "%d", (int)hist->data[i] );
 				if ( put_line(fd, temp, strlen(temp) ) ) { return (-1); }
 			}
@@ -278,7 +335,6 @@ int send_spectrum(int num, int fd)
 	put_line(fd, HIST_TRL, strlen(HIST_TRL) );
 	return (0);
 }
-
 ///////////////////////////////////////////////////////////////////////////
 ////////////////////      http-specific stuff      ////////////////////////
 ///////////////////////////////////////////////////////////////////////////
@@ -298,7 +354,8 @@ void decodeurl(char *dst, const char *src);
 
 int send_header(int fd, int type)
 {
-	put_line(fd, HDRA, 49); put_line(fd, HDRB, 35);
+	put_line(fd, HDRA, 49);
+	put_line(fd, HDRB, 35);
 	put_line(fd, content_types[type], strlen(content_types[type]) );
 	put_line(fd, (char*)"\r\n\r\n", 4);
 	return 0;
