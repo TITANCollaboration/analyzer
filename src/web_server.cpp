@@ -327,15 +327,12 @@ int send_2d_spectrum(int num, int fd)
 			for (i = 0; i < hist->valid_bins; i++) {
 				put_line(fd, ",", 1 );
 				sprintf(temp, "%d", (int)hist->data[i] );
-				strcat(output, temp);
 				if ( put_line(fd, temp, strlen(temp) ) ) { return (-1); }
 			}
 			put_line(fd, "]", 1 );
 		}
 	}
 	put_line(fd, HIST_TRL, strlen(HIST_TRL) );
-	printf("1d Output: %s\n", output);
-	memset(&output[0], 0, sizeof(output));
 	return (0);
 }
 ///////////////////////////////////////////////////////////////////////////
