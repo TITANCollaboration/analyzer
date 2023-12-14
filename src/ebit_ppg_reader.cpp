@@ -144,15 +144,18 @@ void read_ebit_parameter(int run_number) {
     //cout << "Recieved message:" << incoming_msg.str() << "\n";
 
     //const char* json = incoming_msg.str().c_str(); // !!Uncomment me after testing
-    const char* json = "{\"command\": \"new_cycle\", \"cycle_number\": 12, \"run_number\": 113 , \"scan_settings\": {\"EPICS\": [{\"demand_dev\": \"EBIT:BIAS:VOL\", \"demand_val\": 100.0, \"human_name\": \"Drift tube 5 - PL\", \"measured_dev\":\"EBIT:BIAS:RDVOL\", \"measured_val\": 99.97}],\"FC0InOut\": null,\"PPG\": []},\"timestamp\": 1624392506385}";
+    //const char* json = "{\"command\": \"new_cycle\", \"cycle_number\": 12, \"run_number\": 113 , \"scan_settings\": {\"EPICS\": [{\"demand_dev\": \"EBIT:BIAS:VOL\", \"demand_val\": 100.0, \"human_name\": \"Drift tube 5 - PL\", \"measured_dev\":\"EBIT:BIAS:RDVOL\", \"measured_val\": 99.97}],\"FC0InOut\": null,\"PPG\": []},\"timestamp\": 1624392506385}";
 
-    // cout << json << "\n";
-    const char* new_json = add_to_json(json, current_unix_timestamp);
-    json_file << new_json << "\n";
-  /*  Document ppg_data;  // Setup document type for incoming JSON
-    ppg_data.Parse(new_json);  // Parse the JSON, should be ?result?
-    Writer<OStreamWrapper> writer(osw);
-    ppg_data.Accept(writer);*/
+    string json_str = incoming_msg.to_string();
+    if(json_str.length()>0){
+      const char* new_json = add_to_json(json_str.c_str(), current_unix_timestamp);
+      json_file << new_json << "\n";
+      /*  Document ppg_data;  // Setup document type for incoming JSON
+	  ppg_data.Parse(new_json);  // Parse the JSON, should be ?result?
+	  Writer<OStreamWrapper> writer(osw);
+	  ppg_data.Accept(writer);*/  
+      write_csv_data(run_csv_file, json_str.c_str(), current_unix_timestamp);
+    }
 
     write_csv_data(run_csv_file, json, current_unix_timestamp);
     //sleep_for(1ms);
