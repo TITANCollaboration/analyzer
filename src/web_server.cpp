@@ -40,7 +40,7 @@ char *histo_2d_list[MAXSPECNAMES];
 #define ODBAMGET     6 /* command 6 */
 #define CALLSPECHANDLER  7 /* command 7 */
 #define MDPP16_2D_HIST_CALL 8 /* command 8 */
-#define MDPP16_2D_SUM_HIST_CALL 9 /* command 8 */
+#define MDPP16_2D_SUM_HIST_CALL 9 /* command 9 */
 
 
 int send_spectrum_list(int fd);
@@ -111,10 +111,10 @@ int handle_connection(int fd)
 	}
 	printf("Command number: %i\n", command);
 	switch (command) {
-	// curl "http://titan01.triumf.ca:9093/?cmd=callspechandler&spectrum1=spec1&spectrum2=spec2"
+	// curl "http://titan05.triumf.ca:9093/?cmd=callspechandler&spectrum1=spec1&spectrum2=spec2"
 	case SPECLIST:       // fprintf(stdout,"COMMAND: List\n"       );
 		send_spectrum_list(fd); return (0);
-	case CALLSPECHANDLER: //printf("CMD: Get %d spec from Handler\n", arg);
+	case CALLSPECHANDLER: //1d spectra
 		send_spectrum(arg, fd); return (0);
 	case GETSPEC2D: //2d spectra
 		send_2d_spectrum(arg, fd); return (0);
@@ -276,6 +276,7 @@ int send_2d_sum_hist(int num, int fd)
   return(0);
 }
 
+// Formats 1d spectra output for the SpectrumViewer
 int send_spectrum(int num, int fd)
 {
 	int i, j;  char temp[256];
@@ -306,6 +307,7 @@ int send_spectrum(int num, int fd)
 	return (0);
 }
 
+// Formats 2d spectra output for the SpectrumViewer
 int send_2d_spectrum(int num, int fd)
 {
 	int i, j;  char temp[256];
@@ -322,9 +324,9 @@ int send_2d_spectrum(int num, int fd)
 		} else {                               // do have this - send contents
 			sprintf(temp, "\'%s\':[", histo_2d_list[j] );
 			put_line(fd, temp, strlen(temp) );
-			sprintf(temp, "%d", (int)hist->rowl); //The first value is the row length for 2d spectra
+			sprintf(temp, "%d", (int)hist->xbins); //The first value is the row length (xbins) for 2d spectra
 			put_line(fd, temp, strlen(temp));
-			for (i = 0; i < hist->valid_bins; i++) {
+			for (i = 0; i < hist->nbins; i++) {
 				put_line(fd, ",", 1 );
 				sprintf(temp, "%d", (int)hist->data[i] );
 				if ( put_line(fd, temp, strlen(temp) ) ) { return (-1); }

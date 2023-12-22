@@ -218,7 +218,7 @@ int hist_mdpp_init()
 	char title[STRING_LEN], handle[STRING_LEN];
 	int i;
 
-	// Adding the labels for the dummy 1d data
+	// Generating and filling the dummy 1d data
 	TH1IHist *test_hist; 
 	test_hist = H1_BOOK("test_handle", "test_chan", TEST_BINS, 0, TEST_BINS);
 
@@ -235,16 +235,17 @@ int hist_mdpp_init()
     	test_hist->Fill(test_hist, random_number, 1);
 	}
 
-	// Adding the labels for the dummy 2d data
+	// Generating and filling the dummy 2d data
 	TH2IHist *test_2d_hist;
-	int rowl = 20;
-	test_2d_hist = H2_BOOK("test_2d_handle", "test_2d_chan", TEST_2d_BINS, rowl, TEST_2d_BINS);
+	int xbins = 20;
+	int ybins = 20;
+	test_2d_hist = H2_BOOK("test_2d_handle", "test_2d_chan", xbins, ybins);
 	
 	for(int i=0; i<1000; i++) {
-	        int rand_x = rand() % rowl; // Generate the random number for x axis
-		int rand_y = rand() % (TEST_2d_BINS / rowl); // Generate the random number for y axis
+	    int rand_x = rand() % xbins; // Generate the random number for x axis
+		int rand_y = rand() % (TEST_2d_BINS / xbins); // Generate the random number for y axis
 		test_2d_hist->Fill(test_2d_hist, rand_x, rand_y, 1);
-        }	
+    }	
 
 	for (i = 0; i < MAX_CHAN; i++) { // Create each histogram for this channel
 

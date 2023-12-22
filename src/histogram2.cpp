@@ -27,48 +27,54 @@ int Zero2_Histograms()
 int TH2IHist_Reset(TH2IHist *thisptr)
 {
 	memset(thisptr->data, 0, thisptr->xbins*sizeof(float)); return(0);
-	thisptr->valid_bins    = thisptr->xbins;
-	thisptr->underflow     = 0;
-	thisptr->overflow      = 0;
+	thisptr->valid_bins    = thisptr->nbins;
+	thisptr->xunderflow     = 0;
+	thisptr->xoverflow      = 0;
+	thisptr->yunderflow     = 0;
+	thisptr->yoverflow      = 0;
 	thisptr->entries       = 0;
 }
 
+// Adds counts to the data array 
 int TH2IHist_Fill(TH2IHist *thisptr, int binx, int biny, int count)
 {
-	
-	int rowl = (thisptr->rowl);
-	if( binx <            0 ) { (thisptr->underflow)++; return(0); }
-	if( biny <            0 ) { (thisptr->underflow)++; return(0); }
-	int bin = rowl*biny+binx;
-	if( bin >= thisptr->xbins ) { (thisptr->overflow)++; return(0); }
-	else {
-		(thisptr->data[bin])+=count;
-	}
+	int bin = thisptr->GetBin(thisptr, binx, biny); // overflow/underflow should be handled by the GetBin function
+	(thisptr->data[bin])+=count;
 	(thisptr->entries)+=count;
 	return(0);
 }
 
+// returns the global bin number given x and y bins
+int TH2IHist_GetBin(TH2IHist *thisptr, int binx, int biny) 
+{
+	if (binx < 0) {(thisptr->xunderflow)++; return(0);} // underflow x case
+	if (biny < 0) {(thisptr->yunderflow)++; return(0);} // underflow y case
+    if (binx > thisptr->xbins) {(thisptr->xoverflow)++; return(0);} //overflow x case
+	if (biny > thisptr->ybins) {(thisptr->yoverflow)++; return(0);} //overflow y case 
+
+	return((thisptr->xbins)*biny + binx); // 
+}
+
 int TH2IHist_SetBinContent(TH2IHist *thisptr, int binx, int biny, int value)
 {
-        int rowl = (thisptr->rowl);
-        if( binx < 0 || biny < 0 ) { return(-1); }
-	int bin = rowl*biny+binx;
-	if( bin >= thisptr->xbins ) { return(-1);}
+    int bin = thisptr->GetBin(thisptr, binx, biny);
 	(thisptr->data[bin])=value; return(0);
 }
 
-int TH2IHist_GetBinContent(TH2IHist *thisptr, int bin)
+int TH2IHist_GetBinContent(TH2IHist *thisptr, int binx, int biny)
 {
-	if( bin < 0 || bin >= thisptr->xbins ) { return(0); }
+	int bin = thisptr->GetBin(thisptr, binx, biny);
 	return( (thisptr->data[bin]) );
 }
 
+// Sets the number of total bins 
 int TH2IHist_SetValidLen(TH2IHist *thisptr, int bins)
 {
 	if( bins < 0 || bins >= thisptr->xbins ) { return(0); }
 	(thisptr->valid_bins)=bins; return(0);
 }
 
+// Checks if the name matches any of the titles of the histograms in histogram_list 
 /* if thisptr starts being slow - add names to hash table */
 TH2IHist *hist2_querytitle(char *name)
 {
@@ -76,11 +82,12 @@ TH2IHist *hist2_querytitle(char *name)
 	for(i=0; i<next_histogram; i++) {
 		//printf("Histogram that exists in histogram.c : %s", histogram_list[i]);
 		ptr = (TH2IHist *)histogram_list[i];
-		printf("rowl: %i\n", ptr->rowl);
 		if( strcmp(name, ptr->title) == 0 ) { return( ptr ); }
 	}	
 	return( NULL );
 }
+
+// Checks if the name matches any of the handles of the histograms in histogram_list 
 TH2IHist *hist2_queryhandle(char *name)
 {
 	TH2IHist *ptr;   int i;
@@ -92,9 +99,11 @@ TH2IHist *hist2_queryhandle(char *name)
 }
 //TH2IHist *hist_querynum(int num){}
 
-TH2IHist *H2_BOOK(char *name, char *title, int nbins, int rownum, int arg3)
+// TH2IHist constructor 
+TH2IHist *H2_BOOK(char *name, char *title, int xbins, int ybins)
 {
 	int tlen, hlen; TH2IHist *result;
+	int nbins = xbins * ybins;
 	if( next_histogram >= MAX_HISTOGRAMS ) {
 		fprintf(stderr,"H2_BOOK: max number of histograms:%d exceeded\n",
 		        MAX_HISTOGRAMS );
@@ -115,14 +124,18 @@ TH2IHist *H2_BOOK(char *name, char *title, int nbins, int rownum, int arg3)
 	memcpy(result->handle, name, hlen);
 	memcpy(result->title, title, tlen);
 	memset(result->data, 0, nbins*sizeof(float) );
-	result->underflow     = 0;
-	result->rowl          = rownum;
-	result->overflow      = 0;
+	result->xunderflow    = 0;
+	result->xoverflow     = 0;
+	result->yunderflow    = 0;
+	result->yoverflow     = 0;
 	result->entries       = 0;
-	result->xbins         = nbins;
+	result->xbins         = xbins;
+	result->ybins         = ybins;
+	result->nbins		  = nbins;
 	result->valid_bins    = nbins;
 	result->Reset         = &TH2IHist_Reset;
 	result->Fill          = &TH2IHist_Fill;
+	result->GetBin        = &TH2IHist_GetBin;
 	result->SetBinContent = &TH2IHist_SetBinContent;
 	result->GetBinContent = &TH2IHist_GetBinContent;
 	result->SetValidLen   = &TH2IHist_SetValidLen;

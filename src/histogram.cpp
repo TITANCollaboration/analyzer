@@ -59,6 +59,7 @@ int TH1IHist_Reset(TH1IHist *thisptr)
 	thisptr->entries       = 0;
 }
 
+// Adds counts to the data array 
 int TH1IHist_Fill(TH1IHist *thisptr, int bin, int count)
 {
 	(thisptr->entries)++;
@@ -87,6 +88,7 @@ int TH1IHist_SetValidLen(TH1IHist *thisptr, int bins)
 	(thisptr->valid_bins)=bins; return(0);
 }
 
+// Checks if the name matches any of the titles of the histograms in histogram_list 
 /* if thisptr starts being slow - add names to hash table */
 TH1IHist *hist_querytitle(char *name)
 {
@@ -98,6 +100,8 @@ TH1IHist *hist_querytitle(char *name)
 	}
 	return( NULL );
 }
+
+// Checks if the name matches any of the handles of the histograms in histogram_list 
 TH1IHist *hist_queryhandle(char *name)
 {
 	TH1IHist *ptr;   int i;
@@ -109,6 +113,7 @@ TH1IHist *hist_queryhandle(char *name)
 }
 //TH1IHist *hist_querynum(int num){}
 
+// TH1IHist constructor
 TH1IHist *H1_BOOK(char *name, char *title, int nbins, int arg2, int arg3)
 {
 	int tlen, hlen; TH1IHist *result;
