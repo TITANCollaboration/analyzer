@@ -120,7 +120,7 @@ void read_ebit_parameter(int run_number) {
   std::cout << "Collecting updates from EBIT PPG server...\n" << std::endl;
   zmq::socket_t subscriber(context, ZMQ_SUB);
 
-  subscriber.connect("tcp://titan02.triumf.ca:5555");
+  subscriber.connect("tcp://lxebit.triumf.ca:5656");
   subscriber.set(zmq::sockopt::subscribe, "");
   subscriber.set(zmq::sockopt::rcvtimeo, 2000); // every 2 seconds timeout so we can check if we need to close the thread
 
