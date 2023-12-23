@@ -99,7 +99,7 @@ void web_server_main(int *arg)
 	close(sock_fd);
 	return;
 }
-printf("Command number: %i\n", command);
+
 int handle_connection(int fd)
 {
 	int request_count, content_type, command, arg;
